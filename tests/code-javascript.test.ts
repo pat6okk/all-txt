@@ -1,0 +1,74 @@
+import { TaskParser } from '../src/parser/task-parser';
+import { TodoTrackerSettings } from '../src/settings/settings';
+
+describe('Task parsing within Javascript comments in code blocks', () => {
+  let parser: TaskParser;
+  let settings: TodoTrackerSettings;
+
+  beforeEach(() => {
+    settings = {
+      refreshInterval: 60,
+      includeCalloutBlocks: true,
+      includeCodeBlocks: true,
+      languageCommentSupport: {
+        enabled: true,
+      },
+      additionalTaskKeywords: [],
+      taskViewMode: 'default'
+    };
+    parser = TaskParser.create(settings);
+  });
+
+  describe('Tasks in javascript code blocks', () => {
+    test(`should match tasks in javascript comments when enabled`, () => {
+      const lines = `
+\`\`\` javascript
+/* TODO test task text */
+
+/*
+TODO test task text
+ */
+
+/**
+ * TODO test task text
+ */
+
+// TODO test task text
+
+private test() {
+  const key1 = value; // TODO test task text
+  const key2 = value; /* TODO test task text */
+  TODO task task
+}
+\`\`\`
+`;
+      const tasks = parser.parseFile(lines, 'test.md');
+      expect(tasks).toHaveLength(7);
+      expect(tasks[0].indent).toBe("/* ");
+      expect(tasks[0].text).toBe("test task text");
+      expect(tasks[0].tail).toBe(" */");
+      expect(tasks[1].indent).toBe("");
+      expect(tasks[2].indent).toBe(" ");
+      expect(tasks[2].listMarker).toBe("* ");
+      expect(tasks[3].indent).toBe("// ");
+      expect(tasks[4].indent).toBe("  const key1 = value; // ");
+      expect(tasks[5].indent).toBe("  const key2 = value; /* ");
+      expect(tasks[5].tail).toBe(" */");
+      expect(tasks[6].indent).toBe("  ");
+    });
+
+    test(`should match tasks in js comments when enabled`, () => {
+      const lines = `
+\`\`\`js
+// TODO test task text
+\`\`\`
+`;
+      const tasks = parser.parseFile(lines, 'test.md');
+      expect(tasks).toHaveLength(1);
+      expect(tasks[0].indent).toBe("// ");
+      expect(tasks[0].text).toBe("test task text");
+    });
+  });
+
+});
+

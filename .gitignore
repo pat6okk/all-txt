@@ -1,0 +1,37 @@
+# vscode
+.vscode 
+
+# Intellij
+*.iml
+.idea
+
+# npm
+node_modules
+package-lock.json
+
+# Don't include the compiled main.js file in the repo.
+# They should be uploaded to GitHub releases instead.
+main.js
+
+# Exclude sourcemaps
+*.map
+
+# obsidian
+data.json
+
+# Exclude macOS Finder (System Explorer) View States
+.DS_Store
+
+# exclude local tools
+.env
+.crush
+
+# exclude coverage report
+coverage/
+
+# Private development files (not for publication)
+.agent/
+00/
+analysis/
+.github/copilot-instructions.md
+.github/RELEASE_PROCESS.md

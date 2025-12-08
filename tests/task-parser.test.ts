@@ -1,5 +1,5 @@
 import { TaskParser } from '../src/parser/task-parser';
-import { TodoTrackerSettings } from '../src/settings/settings';
+import { TodoTrackerSettings } from '../src/settings/defaults';
 
 describe('Regular task parsing', () => {
   let parser: TaskParser;
@@ -11,6 +11,12 @@ describe('Regular task parsing', () => {
       doingKeywords: ["DOING", "NOW", "IN-PROGRESS"],
       doneKeywords: ["DONE", "CANCELED", "CANCELLED"],
       keywordColors: {},
+      keywordDescriptions: {},
+      scheduledKeywords: ["SCHEDULED"],
+      deadlineKeywords: ["DEADLINE"],
+      priorityQueues: [],
+      priorityKeywords: [],
+      workflows: [],
       includeCalloutBlocks: true,
       includeCodeBlocks: false,
       languageCommentSupport: {
@@ -214,11 +220,11 @@ TODO task text
       const tasks = parser.parseFile(lines, 'test.md');
 
       expect(tasks).toHaveLength(6);
-      expect(tasks[0].priority).toBe('high');
-      expect(tasks[1].priority).toBe('med');
-      expect(tasks[2].priority).toBe('low');
+      expect(tasks[0].priority).toBe('#A');
+      expect(tasks[1].priority).toBe('#B');
+      expect(tasks[2].priority).toBe('#C');
       expect(tasks[3].priority).toBeNull();
-      expect(tasks[4].priority).toBe('high');
+      expect(tasks[4].priority).toBe('#A');
       expect(tasks[5].priority).toBeNull();
     });
   });
@@ -416,6 +422,12 @@ describe('Task parsing with code blocks', () => {
       doingKeywords: ["DOING", "NOW", "IN-PROGRESS"],
       doneKeywords: ["DONE", "CANCELED", "CANCELLED"],
       keywordColors: {},
+      keywordDescriptions: {},
+      scheduledKeywords: ["SCHEDULED"],
+      deadlineKeywords: ["DEADLINE"],
+      priorityQueues: [],
+      priorityKeywords: [],
+      workflows: [],
       includeCalloutBlocks: true,
       includeCodeBlocks: true,
       languageCommentSupport: {
@@ -458,15 +470,26 @@ describe('Task parsing within langauge spefic comments in code blocks', () => {
 
   beforeEach(() => {
     settings = {
-      refreshInterval: 60,
+      todoKeywords: [],
+      doingKeywords: [],
+      doneKeywords: [],
+      scheduledKeywords: [],
+      deadlineKeywords: [],
+      priorityQueues: [],
+      priorityKeywords: [],
+      workflows: [],
+      keywordColors: {},
+      keywordDescriptions: {},
       includeCalloutBlocks: true,
       includeCodeBlocks: true,
       languageCommentSupport: {
         enabled: true,
       },
       additionalTaskKeywords: [],
-      taskViewMode: 'default'
-    };
+      taskViewMode: 'default',
+      sortMethod: 'default',
+      collapsedPaths: []
+    } as unknown as TodoTrackerSettings;
     parser = TaskParser.create(settings);
   });
 
@@ -490,7 +513,7 @@ TODO test task text
       expect(tasks[0].text).toBe("test task text");
       expect(tasks[1].indent).toBe("");
       expect(tasks[1].listMarker).toBe("- [ ]");
-      expect(tasks[1].priority).toBe("high");
+      expect(tasks[1].priority).toBe("#A");
       expect(tasks[1].text).toBe("test task text");
       expect(tasks[2].indent).toBe("");
       expect(tasks[2].text).toBe("test task text");

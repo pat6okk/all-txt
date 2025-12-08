@@ -1,47 +1,358 @@
 # TODO inline
 
-**TODO inline** is a high-performance, reactive task manager for Obsidian that lives right inside your notes. It scans for tasks using customizable keywords and presents them in a unified, interactive view without disrupting your Markdown workflow.
+<p align="center">
+  <strong>A high-performance, reactive task manager for Obsidian</strong><br>
+  Manage tasks directly inside your notes with zero disruption to your Markdown workflow.
+</p>
 
-> **Note:** This project is a highly optimized, personalized evolution of the original *TodoSeq* plugin, rebuilt for performance and flexibility.
+<p align="center">
+  <a href="https://github.com/pat6okk/todo-inline/releases"><img src="https://img.shields.io/github/v/release/pat6okk/todo-inline?style=flat-square" alt="Release"></a>
+  <a href="https://github.com/pat6okk/todo-inline/blob/master/LICENSE"><img src="https://img.shields.io/github/license/pat6okk/todo-inline?style=flat-square" alt="License"></a>
+  <a href="https://github.com/pat6okk/todo-inline/stargazers"><img src="https://img.shields.io/github/stars/pat6okk/todo-inline?style=flat-square" alt="Stars"></a>
+</p>
 
-## Features
+---
 
-- **Reactive Architecture**: Instant updates. No polling. Zero lag.
-- **Custom Workflow**: Define your own state cycles (e.g., `TODO` -> `DOING` -> `REVIEW` -> `DONE`).
-- **Inline Persistence**: All state changes are saved directly to your Markdown files.
-- **Smart Grouping**: Tasks are automatically grouped by file and persisted state.
-- **Advanced Sorting**: Sort by Priority (`[#A]`), Scheduled Date, Deadline, or File order.
-- **Keyboard First**: Optimised for speed with dedicated commands and hotkeys.
-- **Editor Integration**: Syntax highlighting for all your custom keywords.
+## 🎯 Overview
 
-## Installation
+**TODO inline** transforms your Obsidian vault into a powerful task management system. Tasks are defined directly in your Markdown files using customizable keywords, automatically scanned, and presented in a unified, interactive sidebar view.
 
-This is a private development build.
+> **Built for Power Users**: This plugin is a complete rewrite focused on **performance**, **flexibility**, and **clean architecture**. Event-driven updates, zero polling, and full customization.
+>
+> **Portable by design**: Inspired by the lightweight syntax of **TODO.txt**. Notes remain plain Markdown, so you can copy them anywhere (email, wikis, other editors) without losing task semantics. Perfect for meeting transcripts where an AI extracts keywords to build tasks automatically.
 
-1. Clone into `.obsidian/plugins/todo-inline`.
-2. `npm install`
-3. `npm run build`
-4. Enable in Obsidian Community Plugins.
+---
 
-## Usage
+## ✨ Key Features
 
-### Task Format
-Standard Keyword:
+### 🚀 **Performance & Architecture**
+- **Event-Driven Updates**: No polling loops. Tasks update instantly when files change.
+- **Smart Debouncing**: Intelligent refresh throttling prevents excessive re-scans.
+- **Reactive State Management**: Centralized `TaskStore` with efficient caching.
+
+### 🎨 **Customization**
+- **Custom Keywords**: Define your own task states (`TODO`, `DOING`, `WAITING`, `REVIEW`, etc.).
+- **Visual Workflows**: Build state transition flows with a drag-and-drop interface.
+- **Color Coding**: Assign unique colors to each keyword for visual clarity.
+- **Multi-Priority Queues**: Support multiple independent priority systems (`[#A]`, `[P1]`, etc.).
+
+### 📋 **Task Management**
+- **Inline Persistence**: All changes save directly to Markdown. No external database.
+- **Smart Grouping**: Automatically group tasks by file, state, or priority.
+- **Advanced Sorting**: Sort by priority, scheduled date, deadline, or file order.
+- **Rich Metadata**: Track scheduled dates, deadlines, and priorities per task.
+- **Tooling-friendly**: Compatible with AI or scripts that parse plain text to extract keywords and build task lists (e.g., meeting transcripts).
+
+### 💡 **User Experience**
+- **Unified View**: All vault tasks in one sidebar panel with live updates.
+- **Quick Actions**: Click keywords to cycle states, right-click for context menu.
+- **Jump to Source**: Click task text to instantly navigate to the exact line.
+- **Keyboard-First**: Dedicated commands and hotkeys for power users.
+- **Editor Integration**: Real-time syntax highlighting for all custom keywords.
+
+### 🌍 **Context Support**
+Detects tasks in multiple Markdown contexts:
+- Plain text lines
+- Bullet lists (`-`, `*`, `+`)
+- Numbered lists (`1.`, `2)`)
+- Alphabetic lists (`a.`, `B)`)
+- Checkboxes (`- [ ]`, `- [x]`)
+- Blockquotes (`>`)
+- Callouts (`> [!info]`)
+- Code blocks (optional)
+- Works even outside Obsidian: copy/paste notes to any plain-text medium and keep task keywords intact.
+
+---
+
+## 📦 Installation
+
+### Option 1: Community Plugins (Recommended)
+1. Open **Settings** → **Community Plugins**
+2. Disable **Safe Mode**
+3. Click **Browse** and search for **"TODO inline"**
+4. Click **Install** → **Enable**
+
+### Option 2: Manual Installation
+1. Download the latest release from [Releases](https://github.com/pat6okk/todo-inline/releases)
+2. Extract `main.js`, `manifest.json`, `styles.css` to:
+   ```
+   <vault>/.obsidian/plugins/todo-inline/
+   ```
+3. Reload Obsidian
+4. Enable the plugin in **Settings** → **Community Plugins**
+
+### Option 3: Build from Source
+```bash
+git clone https://github.com/pat6okk/todo-inline.git
+cd todo-inline
+npm install
+npm run build
+```
+Copy `main.js`, `manifest.json`, `styles.css` to your vault's plugin folder.
+
+---
+
+## 🚀 Quick Start
+
+### 1. Define Tasks in Your Notes
+
+**Basic Task:**
 ```markdown
-TODO Write documentation
+TODO Write project documentation
 ```
 
-Checkbox Style (auto-synced):
+**With Checkbox:**
 ```markdown
-- [ ] TODO Write documentation
+- [ ] TODO Implement authentication
 ```
 
-### Attributes
-- **Priority**: `TODO [#A] High priority task`
-- **Scheduled**: `SCHEDULED: <2025-12-25>`
-- **Deadline**: `DEADLINE: <2025-12-31>`
+**With Priority:**
+```markdown
+TODO [#A] Critical bug fix
+```
 
-### View
-- **Click Keyword**: Cycle to next state.
-- **Right Click**: Open context menu.
-- **Click Text**: Jump to file location.
+**With Dates:**
+```markdown
+TODO Review pull requests
+PLAN: <2025-12-10>
+DUE: <2025-12-15>
+```
+
+**In Lists:**
+```markdown
+- TODO Morning standup
+* DOING Code review session
++ DONE Sprint planning
+```
+
+**In Callouts:**
+```markdown
+> [!tip] TODO
+> Remember to commit your changes
+```
+
+### 2. Open the Task View
+
+- Click the **📋 icon** in the left ribbon, or
+- Use command palette: `Ctrl/Cmd+P` → "Show TODO tasks"
+
+### 3. Interact with Tasks
+
+| Action | Behavior |
+|--------|----------|
+| **Click Keyword** | Cycle to next state in workflow |
+| **Right-Click Keyword** | Open context menu (jump to any state) |
+| **Click Task Text** | Navigate to source file/line |
+| **Toggle Checkbox** | Mark as `DONE` or revert to `TODO` |
+
+---
+
+## ⚙️ Configuration
+
+Access settings via **Settings** → **TODO inline**
+
+### 🎨 **Vocabulary (Keywords)**
+
+Define your task states in three categories:
+
+| Category | Default Keywords | Purpose |
+|----------|------------------|---------|
+| **Start States** | `TODO`, `LATER`, `WAIT` | Initial/pending tasks |
+| **In-Progress States** | `DOING`, `NOW`, `IN-PROGRESS` | Active work |
+| **Finished States** | `DONE`, `CANCELED`, `CANCELLED` | Completed tasks |
+
+**Custom Configuration:**
+- Add/remove keywords per category
+- Assign unique colors (RGB/Hex picker)
+- Set custom tooltips
+
+### 🔄 **Workflows (State Transitions)**
+
+Build custom state cycles with visual flow builder:
+
+```
+TODO → DOING → REVIEW → DONE → TODO
+       ↓
+     BLOCKED → TODO
+```
+
+**Features:**
+- Drag-and-drop state ordering
+- Hierarchical flow inheritance
+- Automatic cycle completion (finished states return to start)
+
+### 📊 **Priorities**
+
+Configure multiple priority queues:
+
+**Date Keywords (defaults):**
+```
+PLAN  → Scheduled date
+DUE   → Deadline date
+```
+You can change these keywords in settings.
+
+**Default (numeric queue):**
+```
+[P1] → Critical
+[P2] → Important
+[P3] → Normal
+[P4] → Low
+```
+
+**Custom (letter-based example):**
+```
+[#A] → High
+[#B] → Medium  
+[#C] → Low
+```
+
+### 🎛️ **Advanced Options**
+
+- **Include Callouts**: Parse tasks inside callout blocks
+- **Include Code Blocks**: Detect tasks in code (useful for TODO comments)
+- **Refresh Interval**: Manual scan frequency (10-300s)
+
+---
+
+## 📖 Examples
+
+### Project Management Workflow
+
+```markdown
+# Project: Website Redesign
+
+TODO [#A] Define requirements
+PLAN: <2025-12-08>
+
+DOING Wireframe homepage
+DUE: <2025-12-10>
+
+REVIEW Backend API integration
+PLAN: <2025-12-12>
+
+DONE Initial mockups approved
+```
+
+### Daily Tasks with Context
+
+```markdown
+## Morning Routine
+
+- [ ] TODO Morning standup (15 min)
+- [ ] DOING Review yesterday's PRs
+- [x] DONE Send weekly report
+
+> [!warning] High Priority
+> TODO [#A] Fix production bug #447
+> DUE: <2025-12-08>
+```
+
+### Multi-State Workflow
+
+```markdown
+TODO Research competitors → 
+DOING Draft proposal → 
+REVIEW Stakeholder feedback → 
+APPROVE Final sign-off → 
+DONE Project launched
+```
+
+---
+
+## 🛠️ Development
+
+### Tech Stack
+- **TypeScript** (strict mode)
+- **React 19** (UI components)
+- **Obsidian Plugin API** (v0.16.0+)
+- **esbuild** (bundling)
+- **Jest** (testing)
+
+### Project Structure
+```
+src/
+├── main.ts                 # Plugin entry point
+├── task.ts                 # Task interface/types
+├── parser/
+│   ├── task-parser.ts      # Core parsing engine
+│   ├── date-parser.ts      # Date extraction
+│   └── language-registry.ts # Multi-language support
+├── services/
+│   ├── task-store.ts       # Centralized task cache
+│   ├── workflow-service.ts # State transition logic
+│   └── settings-service.ts # Configuration management
+├── view/
+│   ├── task-view.tsx       # Main React view
+│   └── task-editor.ts      # Markdown editor integration
+├── ui/
+│   ├── view/               # React components (list, toolbar)
+│   └── settings/           # Settings UI components
+└── editor/
+    └── keyword-highlighter.ts # Syntax highlighting
+```
+
+### Build Commands
+
+```bash
+# Development (watch mode)
+npm run dev
+
+# Production build
+npm run build
+
+# Run tests
+npm test
+
+# Version bump
+npm run version
+```
+
+### Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines (what is accepted, tests, privacy, governance).
+
+Quick flow:
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Run tests/build: `npm test` and `npm run build`
+4. Commit: `git commit -m 'Add amazing feature'`
+5. Push and open a PR
+
+---
+
+## 📝 Roadmap
+
+- [ ] Mobile-optimized touch gestures
+- [ ] Improve performance in large vaults
+- [ ] Use AI to build key phrases
+
+
+---
+
+## 🐛 Known Issues
+
+- Large vaults (>1000 files) may experience initial scan delay
+- Code block task detection may conflict with syntax highlighters
+
+Report bugs via [GitHub Issues](https://github.com/pat6okk/todo-inline/issues).
+
+---
+
+## 📄 License
+
+[MIT License](LICENSE) © 2025 Pat6okk
+
+---
+
+## 🙏 Acknowledgments
+
+- Inspired by the original **TodoSeq** plugin
+- Built with ❤️ for the Obsidian community
+- Thanks to all contributors and testers
+
+---
+
+<p align="center">
+  <strong>Star ⭐ this repo if you find it useful!</strong>
+</p>

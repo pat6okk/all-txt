@@ -1,5 +1,5 @@
 import { TaskParser } from '../src/parser/task-parser';
-import { TodoTrackerSettings } from '../src/settings/settings';
+import { TodoTrackerSettings } from '../src/settings/defaults';
 import { Task, DEFAULT_PENDING_STATES, DEFAULT_ACTIVE_STATES, DEFAULT_COMPLETED_STATES } from '../src/task';
 
 describe('Regular Task Parsing (Non-Code Block Tasks)', () => {
@@ -8,15 +8,26 @@ describe('Regular Task Parsing (Non-Code Block Tasks)', () => {
 
   beforeEach(() => {
     settings = {
-      refreshInterval: 60,
+      todoKeywords: ["TODO", "LATER", "WAIT", "WAITING", "FIXME"],
+      doingKeywords: ["DOING", "NOW", "IN-PROGRESS"],
+      doneKeywords: ["DONE", "CANCELED", "CANCELLED"],
+      scheduledKeywords: ["SCHEDULED"],
+      deadlineKeywords: ["DEADLINE"],
+      priorityQueues: [],
+      priorityKeywords: [],
+      workflows: [],
+      keywordColors: {},
+      keywordDescriptions: {},
       includeCodeBlocks: false,
       includeCalloutBlocks: true,
       languageCommentSupport: {
         enabled: false,
       },
       additionalTaskKeywords: [],
-      taskViewMode: 'default'
-    };
+      taskViewMode: 'default',
+      sortMethod: 'default',
+      collapsedPaths: []
+    } as unknown as TodoTrackerSettings;
     parser = TaskParser.create(settings);
   });
 
@@ -24,48 +35,48 @@ describe('Regular Task Parsing (Non-Code Block Tasks)', () => {
     test(`should parse task with high priority`, () => {
       const line = `- TODO [#A] high priority task`;
       const tasks = parser.parseFile(line, 'test.md');
-      
+
       expect(tasks).toHaveLength(1);
       const task = tasks[0];
       expect(task.state).toBe("TODO");
       expect(task.completed).toBe(false);
-      expect(task.priority).toBe('high');
+      expect(task.priority).toBe('#A');
       expect(task.text).toBe('high priority task');
     });
 
     test(`should parse task with medium priority`, () => {
       const line = `- TODO [#B] medium priority task`;
       const tasks = parser.parseFile(line, 'test.md');
-      
+
       expect(tasks).toHaveLength(1);
       const task = tasks[0];
       expect(task.state).toBe("TODO");
       expect(task.completed).toBe(false);
-      expect(task.priority).toBe('med');
+      expect(task.priority).toBe('#B');
       expect(task.text).toBe('medium priority task');
     });
 
     test(`should parse task with low priority`, () => {
       const line = `- TODO [#C] low priority task`;
       const tasks = parser.parseFile(line, 'test.md');
-      
+
       expect(tasks).toHaveLength(1);
       const task = tasks[0];
       expect(task.state).toBe("TODO");
       expect(task.completed).toBe(false);
-      expect(task.priority).toBe('low');
+      expect(task.priority).toBe('#C');
       expect(task.text).toBe('low priority task');
     });
   });
 
   describe('Default Pending States', () => {
     const pendingStates = Array.from(DEFAULT_PENDING_STATES);
-    
+
     pendingStates.forEach(state => {
       test(`should parse ${state} task with basic list marker`, () => {
         const line = `- ${state} test task`;
         const tasks = parser.parseFile(line, 'test.md');
-        
+
         expect(tasks).toHaveLength(1);
         const task = tasks[0];
         expect(task.state).toBe(state);
@@ -78,7 +89,7 @@ describe('Regular Task Parsing (Non-Code Block Tasks)', () => {
       test(`should parse ${state} task with numbered list marker`, () => {
         const line = `1. ${state} test task`;
         const tasks = parser.parseFile(line, 'test.md');
-        
+
         expect(tasks).toHaveLength(1);
         const task = tasks[0];
         expect(task.state).toBe(state);
@@ -91,7 +102,7 @@ describe('Regular Task Parsing (Non-Code Block Tasks)', () => {
       test(`should parse ${state} task with letter list marker`, () => {
         const line = `a) ${state} test task`;
         const tasks = parser.parseFile(line, 'test.md');
-        
+
         expect(tasks).toHaveLength(1);
         const task = tasks[0];
         expect(task.state).toBe(state);
@@ -104,7 +115,7 @@ describe('Regular Task Parsing (Non-Code Block Tasks)', () => {
       test(`should parse ${state} task with checkbox`, () => {
         const line = `- [ ] ${state} test task`;
         const tasks = parser.parseFile(line, 'test.md');
-        
+
         expect(tasks).toHaveLength(1);
         const task = tasks[0];
         expect(task.state).toBe(state);
@@ -117,7 +128,7 @@ describe('Regular Task Parsing (Non-Code Block Tasks)', () => {
       test(`should parse ${state} task with indentation`, () => {
         const line = `    - ${state} test task`;
         const tasks = parser.parseFile(line, 'test.md');
-        
+
         expect(tasks).toHaveLength(1);
         const task = tasks[0];
         expect(task.state).toBe(state);
@@ -130,7 +141,7 @@ describe('Regular Task Parsing (Non-Code Block Tasks)', () => {
       test(`should parse ${state} task with complex text`, () => {
         const line = `- ${state} task with multiple words and punctuation!`;
         const tasks = parser.parseFile(line, 'test.md');
-        
+
         expect(tasks).toHaveLength(1);
         const task = tasks[0];
         expect(task.state).toBe(state);
@@ -142,12 +153,12 @@ describe('Regular Task Parsing (Non-Code Block Tasks)', () => {
 
   describe('Default Active States', () => {
     const activeStates = Array.from(DEFAULT_ACTIVE_STATES);
-    
+
     activeStates.forEach(state => {
       test(`should parse ${state} task with basic list marker`, () => {
         const line = `- ${state} test task`;
         const tasks = parser.parseFile(line, 'test.md');
-        
+
         expect(tasks).toHaveLength(1);
         const task = tasks[0];
         expect(task.state).toBe(state);
@@ -160,7 +171,7 @@ describe('Regular Task Parsing (Non-Code Block Tasks)', () => {
       test(`should parse ${state} task with checkbox`, () => {
         const line = `- [ ] ${state} test task`;
         const tasks = parser.parseFile(line, 'test.md');
-        
+
         expect(tasks).toHaveLength(1);
         const task = tasks[0];
         expect(task.state).toBe(state);
@@ -174,12 +185,12 @@ describe('Regular Task Parsing (Non-Code Block Tasks)', () => {
 
   describe('Default Completed States', () => {
     const completedStates = Array.from(DEFAULT_COMPLETED_STATES);
-    
+
     completedStates.forEach(state => {
       test(`should parse ${state} task with basic list marker`, () => {
         const line = `- ${state} test task`;
         const tasks = parser.parseFile(line, 'test.md');
-        
+
         expect(tasks).toHaveLength(1);
         const task = tasks[0];
         expect(task.state).toBe(state);
@@ -192,7 +203,7 @@ describe('Regular Task Parsing (Non-Code Block Tasks)', () => {
       test(`should parse ${state} task with checkbox`, () => {
         const line = `- [x] ${state} test task`;
         const tasks = parser.parseFile(line, 'test.md');
-        
+
         expect(tasks).toHaveLength(1);
         const task = tasks[0];
         expect(task.state).toBe(state);
@@ -208,7 +219,7 @@ describe('Regular Task Parsing (Non-Code Block Tasks)', () => {
     test('should parse task with SCHEDULED date', () => {
       const content = `- TODO test task\nSCHEDULED: <2024-01-15>`;
       const tasks = parser.parseFile(content, 'test.md');
-      
+
       expect(tasks).toHaveLength(1);
       const task = tasks[0];
       expect(task.state).toBe('TODO');
@@ -222,7 +233,7 @@ describe('Regular Task Parsing (Non-Code Block Tasks)', () => {
     test('should parse task with SCHEDULED date and time', () => {
       const content = `- TODO test task\nSCHEDULED: <2024-01-15 14:30>`;
       const tasks = parser.parseFile(content, 'test.md');
-      
+
       expect(tasks).toHaveLength(1);
       const task = tasks[0];
       expect(task.state).toBe('TODO');
@@ -238,7 +249,7 @@ describe('Regular Task Parsing (Non-Code Block Tasks)', () => {
     test('should parse task with SCHEDULED date and day of week', () => {
       const content = `- TODO test task\nSCHEDULED: <2024-01-15 Mon>`;
       const tasks = parser.parseFile(content, 'test.md');
-      
+
       expect(tasks).toHaveLength(1);
       const task = tasks[0];
       expect(task.state).toBe('TODO');
@@ -252,7 +263,7 @@ describe('Regular Task Parsing (Non-Code Block Tasks)', () => {
     test('should parse task with SCHEDULED date, time and day of week', () => {
       const content = `- TODO test task\nSCHEDULED: <2024-01-15 Mon 14:30>`;
       const tasks = parser.parseFile(content, 'test.md');
-      
+
       expect(tasks).toHaveLength(1);
       const task = tasks[0];
       expect(task.state).toBe('TODO');
@@ -270,7 +281,7 @@ describe('Regular Task Parsing (Non-Code Block Tasks)', () => {
     test('should parse task with DEADLINE date', () => {
       const content = `- TODO test task\nDEADLINE: <2024-01-20>`;
       const tasks = parser.parseFile(content, 'test.md');
-      
+
       expect(tasks).toHaveLength(1);
       const task = tasks[0];
       expect(task.state).toBe('TODO');
@@ -284,7 +295,7 @@ describe('Regular Task Parsing (Non-Code Block Tasks)', () => {
     test('should parse task with both SCHEDULED and DEADLINE dates', () => {
       const content = `- TODO test task\nSCHEDULED: <2024-01-15>\nDEADLINE: <2024-01-20>`;
       const tasks = parser.parseFile(content, 'test.md');
-      
+
       expect(tasks).toHaveLength(1);
       const task = tasks[0];
       expect(task.state).toBe('TODO');
@@ -300,7 +311,7 @@ describe('Regular Task Parsing (Non-Code Block Tasks)', () => {
     test('should parse multiple tasks from file content', () => {
       const content = `- TODO first task\n- DOING second task\n- DONE third task`;
       const tasks = parser.parseFile(content, 'test.md');
-      
+
       expect(tasks).toHaveLength(3);
       expect(tasks[0].state).toBe('TODO');
       expect(tasks[1].state).toBe('DOING');
@@ -310,7 +321,7 @@ describe('Regular Task Parsing (Non-Code Block Tasks)', () => {
     test('should skip non-task lines', () => {
       const content = `- TODO first task\nThis is not a task\n- DOING second task`;
       const tasks = parser.parseFile(content, 'test.md');
-      
+
       expect(tasks).toHaveLength(2);
       expect(tasks[0].state).toBe('TODO');
       expect(tasks[1].state).toBe('DOING');
@@ -319,7 +330,7 @@ describe('Regular Task Parsing (Non-Code Block Tasks)', () => {
     test('should handle empty lines between tasks', () => {
       const content = `- TODO first task\n\n- DOING second task`;
       const tasks = parser.parseFile(content, 'test.md');
-      
+
       expect(tasks).toHaveLength(2);
       expect(tasks[0].state).toBe('TODO');
       expect(tasks[1].state).toBe('DOING');
@@ -330,7 +341,7 @@ describe('Regular Task Parsing (Non-Code Block Tasks)', () => {
     test('should parse task without list marker', () => {
       const line = `TODO test task without list marker`;
       const tasks = parser.parseFile(line, 'test.md');
-      
+
       expect(tasks).toHaveLength(1);
       const task = tasks[0];
       expect(task.state).toBe('TODO');
@@ -343,21 +354,21 @@ describe('Regular Task Parsing (Non-Code Block Tasks)', () => {
     test('should not parse task with incorrect case', () => {
       const line = `- todo test task (lowercase)`;
       const tasks = parser.parseFile(line, 'test.md');
-      
+
       expect(tasks).toHaveLength(0);
     });
 
     test('should not parse task with partial keyword match', () => {
       const line = `- TOD test task (partial match)`;
       const tasks = parser.parseFile(line, 'test.md');
-      
+
       expect(tasks).toHaveLength(0);
     });
 
     test('should parse task with keyword at start of text', () => {
       const line = `- TODO TODO test task (keyword in text)`;
       const tasks = parser.parseFile(line, 'test.md');
-      
+
       expect(tasks).toHaveLength(1);
       const task = tasks[0];
       expect(task.state).toBe('TODO');
@@ -367,7 +378,7 @@ describe('Regular Task Parsing (Non-Code Block Tasks)', () => {
     test('should handle task with special characters in text', () => {
       const line = `- TODO test task with @mentions #hashtags and [links]`;
       const tasks = parser.parseFile(line, 'test.md');
-      
+
       expect(tasks).toHaveLength(1);
       const task = tasks[0];
       expect(task.state).toBe('TODO');
@@ -379,7 +390,7 @@ describe('Regular Task Parsing (Non-Code Block Tasks)', () => {
     test('should parse unchecked checkbox task', () => {
       const line = `- [ ] TODO test task`;
       const tasks = parser.parseFile(line, 'test.md');
-      
+
       expect(tasks).toHaveLength(1);
       const task = tasks[0];
       expect(task.state).toBe('TODO');
@@ -391,7 +402,7 @@ describe('Regular Task Parsing (Non-Code Block Tasks)', () => {
     test('should parse checked checkbox task', () => {
       const line = `- [x] DONE test task`;
       const tasks = parser.parseFile(line, 'test.md');
-      
+
       expect(tasks).toHaveLength(1);
       const task = tasks[0];
       expect(task.state).toBe('DONE');
@@ -403,7 +414,7 @@ describe('Regular Task Parsing (Non-Code Block Tasks)', () => {
     test('should parse checked checkbox task with different state', () => {
       const line = `- [x] TODO test task (but checked)`;
       const tasks = parser.parseFile(line, 'test.md');
-      
+
       expect(tasks).toHaveLength(1);
       const task = tasks[0];
       expect(task.state).toBe('TODO');
@@ -417,12 +428,12 @@ describe('Regular Task Parsing (Non-Code Block Tasks)', () => {
     test('should parse task with all features', () => {
       const content = `- TODO [#A] complex task\nSCHEDULED: <2024-01-15>\nDEADLINE: <2024-01-20>`;
       const tasks = parser.parseFile(content, 'test.md');
-      
+
       expect(tasks).toHaveLength(1);
       const task = tasks[0];
       expect(task.state).toBe('TODO');
       expect(task.completed).toBe(false);
-      expect(task.priority).toBe('high');
+      expect(task.priority).toBe('#A');
       expect(task.text).toBe('complex task');
       expect(task.scheduledDate).not.toBeNull();
       expect(task.deadlineDate).not.toBeNull();
@@ -431,7 +442,7 @@ describe('Regular Task Parsing (Non-Code Block Tasks)', () => {
     test('should parse indented task with dates', () => {
       const content = `    - TODO indented task\n    SCHEDULED: <2024-01-15>`;
       const tasks = parser.parseFile(content, 'test.md');
-      
+
       expect(tasks).toHaveLength(1);
       const task = tasks[0];
       expect(task.state).toBe('TODO');
@@ -443,7 +454,7 @@ describe('Regular Task Parsing (Non-Code Block Tasks)', () => {
     test('should handle multiple date lines correctly', () => {
       const content = `- TODO task with multiple dates\nSCHEDULED: <2024-01-15>\nDEADLINE: <2024-01-20>\nSCHEDULED: <2024-01-16> (should be ignored)`;
       const tasks = parser.parseFile(content, 'test.md');
-      
+
       expect(tasks).toHaveLength(1);
       const task = tasks[0];
       expect(task.state).toBe('TODO');
@@ -459,15 +470,26 @@ describe('Regular Task Parsing (Non-Code Block Tasks)', () => {
 
     beforeEach(() => {
       settings = {
-        refreshInterval: 60,
+        todoKeywords: [],
+        doingKeywords: [],
+        doneKeywords: [],
+        scheduledKeywords: ["SCHEDULED"],
+        deadlineKeywords: ["DEADLINE"],
+        priorityQueues: [],
+        priorityKeywords: [],
+        workflows: [],
+        keywordColors: {},
+        keywordDescriptions: {},
         includeCodeBlocks: false,
         includeCalloutBlocks: true,
         languageCommentSupport: {
           enabled: false,
         },
         additionalTaskKeywords: [],
-        taskViewMode: 'default'
-      };
+        taskViewMode: 'default',
+        sortMethod: 'default',
+        collapsedPaths: []
+      } as unknown as TodoTrackerSettings;
       parser = TaskParser.create(settings);
     });
 
@@ -476,7 +498,7 @@ describe('Regular Task Parsing (Non-Code Block Tasks)', () => {
 TODO = x + y / z
 $$`;
       const tasks = parser.parseFile(content, 'test.md');
-      
+
       expect(tasks).toHaveLength(0);
     });
 
@@ -487,7 +509,7 @@ DOING = a + b * c
 DONE = result
 $$`;
       const tasks = parser.parseFile(content, 'test.md');
-      
+
       expect(tasks).toHaveLength(0);
     });
 
@@ -500,7 +522,7 @@ $$
 
 Some text after`;
       const tasks = parser.parseFile(content, 'test.md');
-      
+
       expect(tasks).toHaveLength(0);
     });
 
@@ -511,7 +533,7 @@ $$
 
 - TODO real task`;
       const tasks = parser.parseFile(content, 'test.md');
-      
+
       expect(tasks).toHaveLength(1);
       const task = tasks[0];
       expect(task.state).toBe('TODO');
@@ -528,7 +550,7 @@ $$
 
 - TODO second task`;
       const tasks = parser.parseFile(content, 'test.md');
-      
+
       expect(tasks).toHaveLength(2);
       expect(tasks[0].state).toBe('TODO');
       expect(tasks[0].text).toBe('first task');
@@ -549,7 +571,7 @@ $$
 
 More text`;
       const tasks = parser.parseFile(content, 'test.md');
-      
+
       expect(tasks).toHaveLength(0);
     });
 
@@ -558,7 +580,7 @@ More text`;
 TODO = x + y / z
 - TODO this should be ignored since we're still in math block`;
       const tasks = parser.parseFile(content, 'test.md');
-      
+
       expect(tasks).toHaveLength(0);
     });
 
@@ -567,7 +589,7 @@ TODO = x + y / z
     TODO = x + y / z
     $$`;
       const tasks = parser.parseFile(content, 'test.md');
-      
+
       expect(tasks).toHaveLength(0);
     });
 
@@ -581,7 +603,7 @@ $$
 TODO = some code
 \`\`\``;
       const tasks = parser.parseFile(content, 'test.md');
-      
+
       expect(tasks).toHaveLength(0);
     });
   });
@@ -592,15 +614,26 @@ TODO = some code
 
     beforeEach(() => {
       settings = {
-        refreshInterval: 60,
+        todoKeywords: [],
+        doingKeywords: [],
+        doneKeywords: [],
+        scheduledKeywords: ["SCHEDULED"],
+        deadlineKeywords: ["DEADLINE"],
+        priorityQueues: [],
+        priorityKeywords: [],
+        workflows: [],
+        keywordColors: {},
+        keywordDescriptions: {},
         includeCodeBlocks: false,
         includeCalloutBlocks: true,
         languageCommentSupport: {
           enabled: false,
         },
         additionalTaskKeywords: [],
-        taskViewMode: 'default'
-      };
+        taskViewMode: 'default',
+        sortMethod: 'default',
+        collapsedPaths: []
+      } as unknown as TodoTrackerSettings;
       parser = TaskParser.create(settings);
     });
 
@@ -608,7 +641,7 @@ TODO = some code
       test('should parse task in simple quote block', () => {
         const content = '> TODO task in a quote block';
         const tasks = parser.parseFile(content, 'test.md');
-        
+
         expect(tasks).toHaveLength(1);
         const task = tasks[0];
         expect(task.state).toBe('TODO');
@@ -620,7 +653,7 @@ TODO = some code
       test('should parse task in simple quote block without space', () => {
         const content = '>TODO task in a quote block';
         const tasks = parser.parseFile(content, 'test.md');
-        
+
         expect(tasks).toHaveLength(1);
         const task = tasks[0];
         expect(task.state).toBe('TODO');
@@ -632,7 +665,7 @@ TODO = some code
       test('should parse task in simple quote block with extra space', () => {
         const content = '>  TODO task in a quote block';
         const tasks = parser.parseFile(content, 'test.md');
-        
+
         expect(tasks).toHaveLength(1);
         const task = tasks[0];
         expect(task.state).toBe('TODO');
@@ -644,7 +677,7 @@ TODO = some code
       test('should parse task in simple quote block with bullet', () => {
         const content = '> - TODO task in a quote block';
         const tasks = parser.parseFile(content, 'test.md');
-        
+
         expect(tasks).toHaveLength(1);
         const task = tasks[0];
         expect(task.state).toBe('TODO');
@@ -657,7 +690,7 @@ TODO = some code
       test('should parse task in multi-line quote block', () => {
         const content = '> TODO first task\n> DOING second task\n> DONE third task';
         const tasks = parser.parseFile(content, 'test.md');
-        
+
         expect(tasks).toHaveLength(3);
         expect(tasks[0].state).toBe('TODO');
         expect(tasks[1].state).toBe('DOING');
@@ -667,7 +700,7 @@ TODO = some code
       test('should handle mixed content with quote block', () => {
         const content = '- TODO regular task\n> TODO task in quote\n- DOING another regular task';
         const tasks = parser.parseFile(content, 'test.md');
-        
+
         expect(tasks).toHaveLength(3);
         expect(tasks[0].state).toBe('TODO');
         expect(tasks[1].state).toBe('TODO');
@@ -677,7 +710,7 @@ TODO = some code
       test('should exit quote block when line does not start with >', () => {
         const content = '> TODO task in quote\nThis is not a quote\n> TODO another task';
         const tasks = parser.parseFile(content, 'test.md');
-        
+
         expect(tasks).toHaveLength(2);
         expect(tasks[0].state).toBe('TODO');
         expect(tasks[1].state).toBe('TODO');
@@ -688,7 +721,7 @@ TODO = some code
       test('should parse task in info block', () => {
         const content = '>[!info] \n> TODO task in a info block';
         const tasks = parser.parseFile(content, 'test.md');
-        
+
         expect(tasks).toHaveLength(1);
         const task = tasks[0];
         expect(task.state).toBe('TODO');
@@ -700,7 +733,7 @@ TODO = some code
       test('should parse task in info block title', () => {
         const content = '>[!info] TODO task in info block title';
         const tasks = parser.parseFile(content, 'test.md');
-        
+
         expect(tasks).toHaveLength(1);
         const task = tasks[0];
         expect(task.state).toBe('TODO');
@@ -712,7 +745,7 @@ TODO = some code
       test('should parse task in collapsible info block', () => {
         const content = '>[!info]-\n> TODO task with checkbox in expandable info block';
         const tasks = parser.parseFile(content, 'test.md');
-        
+
         expect(tasks).toHaveLength(1);
         const task = tasks[0];
         expect(task.state).toBe('TODO');
@@ -724,7 +757,7 @@ TODO = some code
       test('should parse multiple tasks in info block', () => {
         const content = '>[!info] \n> TODO first task\n> DOING second task\n> DONE third task';
         const tasks = parser.parseFile(content, 'test.md');
-        
+
         expect(tasks).toHaveLength(3);
         expect(tasks[0].state).toBe('TODO');
         expect(tasks[1].state).toBe('DOING');
@@ -734,12 +767,12 @@ TODO = some code
 
     describe('Other callout block types', () => {
       const calloutTypes = ['note', 'tip', 'faq', 'example', 'abstract', 'todo'];
-      
+
       calloutTypes.forEach(type => {
         test(`should parse task in ${type} block`, () => {
           const content = `>[!${type}] \n> TODO task in ${type} block`;
           const tasks = parser.parseFile(content, 'test.md');
-          
+
           expect(tasks).toHaveLength(1);
           const task = tasks[0];
           expect(task.state).toBe('TODO');
@@ -750,7 +783,7 @@ TODO = some code
         test(`should parse task in collapsible ${type} block`, () => {
           const content = `>[!${type}]-\n> TODO task in collapsible ${type} block`;
           const tasks = parser.parseFile(content, 'test.md');
-          
+
           expect(tasks).toHaveLength(1);
           const task = tasks[0];
           expect(task.state).toBe('TODO');
@@ -764,7 +797,7 @@ TODO = some code
       test('should parse task with SCHEDULED date in callout block', () => {
         const content = '>[!info] \n> TODO test task\n> SCHEDULED: <2024-01-15>';
         const tasks = parser.parseFile(content, 'test.md');
-        
+
         expect(tasks).toHaveLength(1);
         const task = tasks[0];
         expect(task.state).toBe('TODO');
@@ -778,7 +811,7 @@ TODO = some code
       test('should parse task with DEADLINE date in callout block', () => {
         const content = '>[!note] \n> TODO test task\n> DEADLINE: <2024-01-20>';
         const tasks = parser.parseFile(content, 'test.md');
-        
+
         expect(tasks).toHaveLength(1);
         const task = tasks[0];
         expect(task.state).toBe('TODO');
@@ -792,7 +825,7 @@ TODO = some code
       test('should parse task with both SCHEDULED and DEADLINE dates in callout block, no space', () => {
         const content = '>[!tip] \n>TODO test task\n>SCHEDULED: <2024-01-15>\n>DEADLINE: <2024-01-20>';
         const tasks = parser.parseFile(content, 'test.md');
-        
+
         expect(tasks).toHaveLength(1);
         const task = tasks[0];
         expect(task.state).toBe('TODO');
@@ -808,7 +841,7 @@ TODO = some code
       test('should parse unchecked checkbox task in callout block', () => {
         const content = '>[!info] \n> - [ ] TODO test task';
         const tasks = parser.parseFile(content, 'test.md');
-        
+
         expect(tasks).toHaveLength(1);
         const task = tasks[0];
         expect(task.state).toBe('TODO');
@@ -820,7 +853,7 @@ TODO = some code
       test('should parse checked checkbox task in callout block', () => {
         const content = '>[!note] \n> - [x] DONE test task';
         const tasks = parser.parseFile(content, 'test.md');
-        
+
         expect(tasks).toHaveLength(1);
         const task = tasks[0];
         expect(task.state).toBe('DONE');
@@ -834,12 +867,12 @@ TODO = some code
       test('should parse task with priority in callout block', () => {
         const content = '>[!tip] \n> - TODO [#A] high priority task';
         const tasks = parser.parseFile(content, 'test.md');
-        
+
         expect(tasks).toHaveLength(1);
         const task = tasks[0];
         expect(task.state).toBe('TODO');
         expect(task.completed).toBe(false);
-        expect(task.priority).toBe('high');
+        expect(task.priority).toBe('#A');
         expect(task.text).toBe('high priority task');
       });
     });
@@ -853,7 +886,7 @@ TODO = some code
       test('should not parse tasks in callout blocks when disabled', () => {
         const content = '>[!info] \n> TODO task in info block\n- TODO regular task';
         const tasks = parser.parseFile(content, 'test.md');
-        
+
         expect(tasks).toHaveLength(1);
         const task = tasks[0];
         expect(task.state).toBe('TODO');
@@ -864,7 +897,7 @@ TODO = some code
       test('should not parse tasks in simple quote blocks when disabled', () => {
         const content = '> TODO task in quote block\n- TODO regular task';
         const tasks = parser.parseFile(content, 'test.md');
-        
+
         expect(tasks).toHaveLength(1);
         const task = tasks[0];
         expect(task.state).toBe('TODO');
@@ -972,7 +1005,7 @@ y = 2
 > TODO task in quote
 `;
         const tasks = parser.parseFile(content, 'test.md');
-        
+
         expect(tasks).toHaveLength(7);
         expect(tasks[0].state).toBe('TODO');
         expect(tasks[0].text).toBe('regular task');
@@ -988,7 +1021,7 @@ y = 2
         expect(tasks[5].text).toBe('another regular task');
         expect(tasks[6].state).toBe('TODO');
         expect(tasks[6].text).toBe('task in quote');
-        
+
       });
     });
   });

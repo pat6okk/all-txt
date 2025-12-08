@@ -248,14 +248,22 @@ export class TaskParser {
     let cleanedText = taskText;
 
     // Use globally flattened keywords list for detection
-    const escapedPriorities = TaskParser.escapeKeywords(this.priorityKeywords);
-    // Regex to match [#TOKEN]
-    const priRegex = new RegExp(`(\\s*)\\[#(${escapedPriorities})\\](\\s*)`);
+    // Sort by length detailed to ensure longest matches first (e.g. P12 before P1)
+    const sorted = [...this.priorityKeywords].sort((a, b) => b.length - a.length);
+    const escapedPriorities = TaskParser.escapeKeywords(sorted);
+
+    // Regex to match [TOKEN] or TOKEN (surrounded by whitespace or start/end)
+    // Group 1: Leading whitespace
+    // Group 2: The full match ([#A] or P1)
+    // Group 3: The token inside brackets (#A)
+    // Group 4: The naked token (P1)
+    // Group 5: Trailing whitespace
+    const priRegex = new RegExp(`(\\s*)(\\[(${escapedPriorities})\\]|(?<=^|\\s)(${escapedPriorities})(?=$|\\s))(\\s*)`);
 
     const priMatch = priRegex.exec(cleanedText);
     if (priMatch) {
-      priority = priMatch[2]; // Return the raw token (e.g. 'A')
-      priorityLabel = `[#${priority}]`; // Reconstruct or capture full label if needed
+      priority = priMatch[3] || priMatch[4]; // Extract the actual token
+      priorityLabel = priMatch[2]; // The full label found in text
 
       const before = cleanedText.slice(0, priMatch.index);
       const after = cleanedText.slice(priMatch.index + priMatch[0].length);
@@ -302,119 +310,108 @@ export class TaskParser {
   }
 
   /**
-   * Check if a line contains SCHEDULED: or DEADLINE: at the same indent level
-   * @param line The line to check
-   * @param indent The expected indent level
-   * @returns The type of date line found or null
+   * Check if a line contains SCHEDULED: or DEADLINE:
+   * @returns Match object with type and keyword, or null
    */
-  getDateLineType(line: string, taskIndent: string): 'scheduled' | 'deadline' | null {
+  getDateLineInfo(line: string, taskIndent: string): { type: 'scheduled' | 'deadline', keyword: string } | null {
     const trimmedLine = line.trim();
 
-    // For quoted lines, check if the line starts with > and the rest starts with valid keyword
-    if (line.startsWith('>')) {
-      const contentAfterArrow = trimmedLine.substring(1).trim();
-      const schedMatch = this.scheduledKeywords.some(k => contentAfterArrow.startsWith(k + ':'));
-      const deadMatch = this.deadlineKeywords.some(k => contentAfterArrow.startsWith(k + ':'));
+    // Helper to find matching keyword
+    const findMatch = (keywords: string[]): string | undefined => {
+      // Look for KEYWORD: at start of content
+      // Handle > prefix for quotes
+      const content = line.startsWith('>') ? trimmedLine.substring(1).trim() : trimmedLine;
+      return keywords.find(k => content.startsWith(k + ':'));
+    };
 
-      if (schedMatch || deadMatch) {
-        return schedMatch ? 'scheduled' : 'deadline';
-      }
-    }
+    // Check scheduled
+    const schedKw = findMatch(this.scheduledKeywords);
+    if (schedKw) return { type: 'scheduled', keyword: schedKw };
 
-    // For regular tasks
-    const schedMatch = this.scheduledKeywords.some(k => trimmedLine.startsWith(k + ':'));
-    const deadMatch = this.deadlineKeywords.some(k => trimmedLine.startsWith(k + ':'));
+    // Check deadline
+    const deadKw = findMatch(this.deadlineKeywords);
+    if (deadKw) return { type: 'deadline', keyword: deadKw };
 
-    if (!schedMatch && !deadMatch) {
-      return null;
-    }
-
-    // For regular tasks, check indent matching
-    const lineIndent = line.substring(0, line.length - trimmedLine.length);
-    if (lineIndent !== taskIndent && !lineIndent.startsWith(taskIndent)) {
-      return null;
-    }
-
-    const schedMatchCheck = this.scheduledKeywords.some(k => trimmedLine.startsWith(k + ':'));
-    return schedMatchCheck ? 'scheduled' : 'deadline';
+    return null;
   }
 
   /**
    * Parse a date from a line containing SCHEDULED: or DEADLINE: prefix
    * @param line The line to parse
-   * @returns Parsed Date object or null if parsing fails
+   * @param keyword The specific keyword found to strip
    */
-  parseDateFromLine(line: string): Date | null {
-    // Remove the SCHEDULED: or DEADLINE: prefix (dynamic) and trim
-    // Create regex from keywords
-    const allDateKw = [...this.scheduledKeywords, ...this.deadlineKeywords];
-    const escaped = TaskParser.escapeKeywords(allDateKw);
-
+  parseDateFromLine(line: string, keyword: string): Date | null {
+    // Escaped keyword
+    const escaped = TaskParser.escapeKeywords([keyword]);
     // Regex: ^[ >]* (KEYWORD): \s*
     const prefixRegex = new RegExp(`^(\\s*>\\s*|\\s*)(${escaped}):\\s*`);
-
     const content = line.replace(prefixRegex, '').trim();
-
-    // Use the DateParser to parse the date content
     return DateParser.parseDate(content);
   }
 
   /**
    * Extract scheduled and deadline dates from lines following a task
-   * @param lines Array of lines in the file
-   * @param startIndex Index to start searching from
-   * @param indent Task indent level
-   * @param inCalloutBlock Whether we're in a callout block
-   * @returns Date information
    */
   private extractTaskDates(
     lines: string[],
     startIndex: number,
     indent: string,
-  ): { scheduledDate: Date | null; deadlineDate: Date | null } {
+  ): { scheduledDate: Date | null; deadlineDate: Date | null; scheduledSymbol?: string; deadlineSymbol?: string } {
     let scheduledDate: Date | null = null;
     let deadlineDate: Date | null = null;
+    let scheduledSymbol: string | undefined;
+    let deadlineSymbol: string | undefined;
+
     let scheduledFound = false;
     let deadlineFound = false;
 
     for (let i = startIndex; i < lines.length; i++) {
       const nextLine = lines[i];
 
-      // Check if we've moved to a different indent level or non-empty line that's not a date line
       const nextLineTrimmed = nextLine.trim();
       if (nextLineTrimmed === '') {
-        continue; // Skip empty lines
+        continue;
       }
 
-      const dateLineType = this.getDateLineType(nextLine, indent);
+      const lineIndent = nextLine.substring(0, nextLine.length - nextLineTrimmed.length);
+      const isQuoted = nextLine.startsWith('>');
 
-      if (dateLineType === 'scheduled' && !scheduledFound) {
-        const date = this.parseDateFromLine(nextLine);
+      // Strict indentation check: dates must be at same or deeper indent level
+      if (!isQuoted && lineIndent !== indent && !lineIndent.startsWith(indent)) {
+        break;
+      }
+
+      const info = this.getDateLineInfo(nextLine, indent);
+
+      if (info?.type === 'scheduled' && !scheduledFound) {
+        const date = this.parseDateFromLine(nextLine, info.keyword);
         if (date) {
           scheduledDate = date;
+          scheduledSymbol = info.keyword;
           scheduledFound = true;
-        } else {
-          console.warn(`Invalid scheduled date format at line ${i + 1}: "${nextLine.trim()}"`);
         }
-      } else if (dateLineType === 'deadline' && !deadlineFound) {
-        const date = this.parseDateFromLine(nextLine);
+      } else if (info?.type === 'deadline' && !deadlineFound) {
+        const date = this.parseDateFromLine(nextLine, info.keyword);
         if (date) {
           deadlineDate = date;
+          deadlineSymbol = info.keyword;
           deadlineFound = true;
-        } else {
-          console.warn(`Invalid deadline date format at line ${i + 1}: "${nextLine.trim()}"`);
         }
       } else {
-        // Stop looking for date lines if we encounter a non-empty line that's not a date line
-        // or if we've already found both scheduled and deadline dates
-        if (dateLineType === null || (scheduledFound && deadlineFound)) {
+        // If not a date line, stop
+        // Wait, original logic: "if (dateLineType === null) break;"
+        if (!info) {
           break;
         }
       }
+
+      if (scheduledFound && deadlineFound) break;
     }
 
-    return { scheduledDate, deadlineDate };
+    return { scheduledDate, deadlineDate, scheduledSymbol, deadlineSymbol };
   }
+
+
 
   // Parse a single file content into Task[], pure and stateless w.r.t. external app
   parseFile(content: string, path: string): Task[] {
@@ -524,7 +521,7 @@ export class TaskParser {
       };
 
       // Extract dates from following lines
-      const { scheduledDate, deadlineDate } = this.extractTaskDates(
+      const { scheduledDate, deadlineDate, scheduledSymbol, deadlineSymbol } = this.extractTaskDates(
         lines,
         index + 1,
         taskDetails.indent,
@@ -532,6 +529,8 @@ export class TaskParser {
 
       task.scheduledDate = scheduledDate;
       task.deadlineDate = deadlineDate;
+      task.scheduledSymbol = scheduledSymbol;
+      task.deadlineSymbol = deadlineSymbol;
 
       tasks.push(task);
     }

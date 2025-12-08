@@ -2,76 +2,75 @@ import * as React from 'react';
 import TodoTracker from '../../main';
 import { KeywordList } from './KeywordList';
 import { KeywordEditModal } from '../../settings/keyword-modal';
+import { SettingsService } from '../../services/settings-service';
 
 interface VocabularySectionProps {
     plugin: TodoTracker;
-    // We might want to trigger a refresh on parent when settings change
+    settingsService: SettingsService;
     onSettingsChange: () => void;
 }
 
-export const VocabularySection: React.FC<VocabularySectionProps> = ({ plugin, onSettingsChange }) => {
+export const VocabularySection: React.FC<VocabularySectionProps> = ({ plugin, settingsService, onSettingsChange }) => {
+    // We only need to trigger re-renders, the data comes from settingsService.settings
     const [settings, setSettings] = React.useState(plugin.settings);
 
-    // Sync state if plugin settings change externally (unlikely active sync, but good practice)
+    // Sync effect
     React.useEffect(() => {
         setSettings(plugin.settings);
     }, [plugin.settings]);
 
-    const handleUpdate = async (key: 'todoKeywords' | 'doingKeywords' | 'doneKeywords', newKeywords: string[]) => {
-        plugin.settings[key] = newKeywords;
-
-        // Special logic for Start Keywords (Cascading workflow update)
-        if (key === 'todoKeywords') {
-            const currentWorkflows = plugin.settings.workflows;
-            const newWorkflows: string[][] = [];
-            const defaultDone = plugin.settings.doneKeywords[0] || 'DONE';
-
-            plugin.settings.todoKeywords.forEach(k => {
-                const existing = currentWorkflows.find(w => w[0] === k);
-                if (existing) newWorkflows.push([...existing]);
-                else newWorkflows.push([k, defaultDone]);
-            });
-            plugin.settings.workflows = newWorkflows;
-        }
-
-        await plugin.saveSettings();
-        plugin.recreateParser();
-        plugin.taskStore.scanVault(); // Trigger Reactive Update
-        setSettings({ ...plugin.settings }); // Force re-render
+    const handleUpdate = async (key: 'todoKeywords' | 'doingKeywords' | 'doneKeywords', newKeywords: string[], oldKeyword?: string) => {
+        await settingsService.updateVocabulary(key, newKeywords, oldKeyword);
+        setSettings({ ...settingsService.settings });
         onSettingsChange();
     };
 
     const getKeywordColor = (k: string) => {
-        return plugin.settings.keywordColors[k] || '#888888';
+        return settingsService.getKeywordColor(k);
     };
 
     const handleEdit = (k: string) => {
-        new KeywordEditModal(plugin.app, k, getKeywordColor(k), plugin.settings.keywordDescriptions[k] || '', async (res) => {
-            plugin.settings.keywordColors[k] = res.color;
-            plugin.settings.keywordDescriptions[k] = res.description;
-            await plugin.saveSettings();
-            setSettings({ ...plugin.settings });
+        new KeywordEditModal(plugin.app, k, getKeywordColor(k), settingsService.getKeywordDescription(k), async (res) => {
+            await settingsService.updateKeywordMetadata(k, res.color, res.description);
+            setSettings({ ...settingsService.settings });
             onSettingsChange();
         }).open();
     };
 
-    const handleDelete = (key: 'todoKeywords' | 'doingKeywords' | 'doneKeywords', idx: number) => {
+    const handleDelete = async (key: 'todoKeywords' | 'doingKeywords' | 'doneKeywords', idx: number) => {
         const k = plugin.settings[key][idx];
         if (confirm(`Delete '${k}'?`)) {
-            const newKw = [...plugin.settings[key]];
-            newKw.splice(idx, 1);
-            handleUpdate(key, newKw);
+            await settingsService.deleteKeywordFromVocabulary(key, idx);
+            setSettings({ ...settingsService.settings });
+            onSettingsChange();
         }
+    };
+
+    const handleReset = async () => {
+        if (!confirm('Reset Vocabulary (Start/In-Progress/Finished) to defaults?')) return;
+
+        await settingsService.resetVocabulary();
+        setSettings({ ...settingsService.settings });
+        onSettingsChange();
     };
 
     return (
         <div className="todo-vocab-section">
-            <h3>1. Keywords (Vocabulary)</h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h3>1. Keywords (Vocabulary)</h3>
+                <button
+                    onClick={handleReset}
+                    style={{ fontSize: '0.8em', padding: '2px 8px', height: 'auto', opacity: 0.8 }}
+                    title="Reset Vocabulary to Defaults"
+                >
+                    Reset Defaults
+                </button>
+            </div>
             <div style={{ display: 'flex', gap: '20px', overflowX: 'auto' }}>
                 <KeywordList
                     title="Start States"
                     keywords={settings.todoKeywords}
-                    onUpdate={(nw) => handleUpdate('todoKeywords', nw)}
+                    onUpdate={(nw, oldK) => handleUpdate('todoKeywords', nw, oldK)}
                     getKeywordColor={getKeywordColor}
                     onEdit={handleEdit}
                     onDelete={(i) => handleDelete('todoKeywords', i)}
@@ -79,7 +78,7 @@ export const VocabularySection: React.FC<VocabularySectionProps> = ({ plugin, on
                 <KeywordList
                     title="In-Progress"
                     keywords={settings.doingKeywords}
-                    onUpdate={(nw) => handleUpdate('doingKeywords', nw)}
+                    onUpdate={(nw, oldK) => handleUpdate('doingKeywords', nw, oldK)}
                     getKeywordColor={getKeywordColor}
                     onEdit={handleEdit}
                     onDelete={(i) => handleDelete('doingKeywords', i)}
@@ -87,7 +86,7 @@ export const VocabularySection: React.FC<VocabularySectionProps> = ({ plugin, on
                 <KeywordList
                     title="Finished"
                     keywords={settings.doneKeywords}
-                    onUpdate={(nw) => handleUpdate('doneKeywords', nw)}
+                    onUpdate={(nw, oldK) => handleUpdate('doneKeywords', nw, oldK)}
                     getKeywordColor={getKeywordColor}
                     onEdit={handleEdit}
                     onDelete={(i) => handleDelete('doneKeywords', i)}

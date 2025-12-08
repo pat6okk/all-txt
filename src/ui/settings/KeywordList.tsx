@@ -4,7 +4,7 @@ import { setIcon } from 'obsidian';
 interface KeywordListProps {
     title: string;
     keywords: string[];
-    onUpdate: (newKeywords: string[]) => void;
+    onUpdate: (newKeywords: string[], oldKeyword?: string) => void;
     getKeywordColor: (keyword: string) => string;
     onEdit: (keyword: string) => void;
     onDelete: (index: number) => void;
@@ -45,7 +45,7 @@ export const KeywordList: React.FC<KeywordListProps> = ({
         if (val !== keywords[index]) {
             const newKeywords = [...keywords];
             newKeywords[index] = val;
-            onUpdate(newKeywords);
+            onUpdate(newKeywords, keywords[index]);
         }
     };
 

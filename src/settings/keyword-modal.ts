@@ -26,15 +26,18 @@ export class KeywordEditModal extends Modal {
     }
 
     // Predefined Color Palette (Swatches)
-    // Predefined Color Palette (Swatches) - Excludes Black, White, and Dark Grays
+    // Predefined Color Palette (Requested by User)
     private readonly PREDEFINED_COLORS = [
-        '#ff5555', '#ffb86c', '#f1fa8c', '#50fa7b', '#8be9fd', // Dracula
-        '#bd93f9', '#ff79c6', '#6272a4', '#f8f8f2',            // More Dracula (Removed dark gray #44475a)
-        '#e06c75', '#98c379', '#e5c07b', '#61afef', '#c678dd', // One Dark
-        '#d19a66', '#abb2bf', '#56b6c2', '#be5046',            // One Dark (Removed dark gray #282c34)
-        '#E91E63', '#9C27B0', '#673AB7', '#3F51B5', '#2196F3', // Material
-        '#009688', '#4CAF50', '#8BC34A', '#CDDC39', '#FFeb3B',
-        '#FFC107', '#FF9800', '#FF5722', '#795548', '#607D8B'
+        '#FF5555', // Red
+        '#FFB86C', // Orange
+        '#43A047', // Green
+        '#8BE9FD', // Cyan
+        '#BD93F9', // Purple
+        '#F1FA8C', // Yellow
+        '#6272A4', // Blueish Grey
+        '#50FA7B', // Bright Green
+        '#FF79C6', // Pink
+        '#44475A'  // Dark Grey/Navy
     ];
 
     onOpen() {

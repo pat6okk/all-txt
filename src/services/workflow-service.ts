@@ -78,4 +78,39 @@ export class WorkflowService {
     isCompleted(state: string): boolean {
         return this.getCompletedKeywords().includes(state);
     }
+
+    // Expose groups for UI
+    getPriorityGroups(): string[][] {
+        return this.settings.priorityQueues || [];
+    }
+
+    getAllPriorities(): string[] {
+        return this.getPriorityGroups().flat();
+    }
+
+    getNextPriority(current: string | null): string | null {
+        const groups = this.getPriorityGroups();
+        if (groups.length === 0) return null;
+
+        // If no priority, verify default start (first of first group)
+        if (!current) {
+            const firstGroup = groups[0];
+            return firstGroup && firstGroup.length > 0 ? firstGroup[0] : null;
+        }
+
+        // Find which group the current priority belongs to
+        for (const group of groups) {
+            const index = group.indexOf(current);
+            if (index !== -1) {
+                // Found in this group. Cycle strictly within this group.
+                // A -> B -> C -> A (User requested loop, not null)
+                const nextIndex = (index + 1) % group.length;
+                return group[nextIndex];
+            }
+        }
+
+        // If unknown priority (not in any group), maybe switch to first valid?
+        const firstGroup = groups[0];
+        return firstGroup && firstGroup.length > 0 ? firstGroup[0] : null;
+    }
 }

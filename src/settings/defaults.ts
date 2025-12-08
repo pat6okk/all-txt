@@ -34,31 +34,39 @@ export interface TodoTrackerSettings {
 }
 
 export const DEFAULT_SETTINGS: TodoTrackerSettings = {
-    todoKeywords: ['TODO', 'WAIT', 'LATER'],
-    doingKeywords: ['DOING', 'REVIEW'],
-    doneKeywords: ['DONE', 'CANCELED'],
-    scheduledKeywords: ['SCHEDULED'],
-    deadlineKeywords: ['DEADLINE'],
-    priorityQueues: [['#A', '#B', '#C']],
+    todoKeywords: ['TODO', 'WAIT', 'ASK'],
+    doingKeywords: ['DOING', 'IN PROGRESS'],
+    doneKeywords: ['DONE', 'COMPLETED', 'CANCELLED', 'FACT'],
+    scheduledKeywords: ['PLAN'],
+    deadlineKeywords: ['DUE'],
+    priorityQueues: [['P1', 'P2', 'P3', 'P4']],
     priorityKeywords: [], // Deprecated
     workflows: [
         ['TODO', 'DOING', 'DONE'],
         ['WAIT', 'DOING', 'DONE'],
-        ['LATER', 'DOING', 'DONE']
+        ['ASK', 'DOING', 'DONE']
     ],
     keywordColors: {
-        'TODO': '#ff5555',
-        'WAIT': '#ffb86c',
-        'LATER': '#6272a4',
-        'DOING': '#f1fa8c',
-        'REVIEW': '#8be9fd',
-        'DONE': '#50fa7b',
-        'CANCELED': '#bd93f9',
-        'SCHEDULED': '#bd93f9',
-        'DEADLINE': '#ff5555',
-        '#A': '#ff5555',
-        '#B': '#ffb86c',
-        '#C': '#f1fa8c'
+        // Start
+        'TODO': '#FFB86C',
+        'WAIT': '#8BE9FD',
+        'ASK': '#BD93F9',
+        // In-Progress
+        'DOING': '#FFeb3B',
+        'IN PROGRESS': '#FFeb3B',
+        // Finished
+        'DONE': '#50FA7B',
+        'COMPLETED': '#50FA7B',
+        'CANCELLED': '#FF5555',
+        'FACT': '#44475A',
+        // Dates
+        'PLAN': '#6272A4',
+        'DUE': '#FF79C6',
+        // Priorities
+        'P1': '#FF5555',
+        'P2': '#FFB86C',
+        'P3': '#F1FA8C',
+        'P4': '#50FA7B'
     },
     keywordDescriptions: {},
     includeCalloutBlocks: true,

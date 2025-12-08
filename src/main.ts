@@ -6,6 +6,7 @@ import { TodoTrackerSettings, DEFAULT_SETTINGS } from "./settings/defaults";
 import { keywordHighlighter } from './editor/keyword-highlighter';
 import { WorkflowService } from './services/workflow-service';
 import { TaskStore } from './services/task-store';
+import { SettingsService } from './services/settings-service';
 
 export default class TodoInlinePlugin extends Plugin {
   settings: TodoTrackerSettings;
@@ -13,10 +14,12 @@ export default class TodoInlinePlugin extends Plugin {
   // Services
   private workflowService: WorkflowService;
   public taskStore: TaskStore;
+  public settingsService: SettingsService;
 
   // Obsidian lifecycle method called when the plugin is loaded.
   async onload() {
     await this.loadSettings();
+    this.settingsService = new SettingsService(this);
     this.workflowService = new WorkflowService(this.settings);
     this.taskStore = new TaskStore(this.app, this.settings);
 

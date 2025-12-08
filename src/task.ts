@@ -9,12 +9,12 @@ export interface Task {
   state: string;   // state keyword, TODO, DOING, DONE etc.
   completed: boolean; // is the task considered complete
   priority: string | null;     // Raw priority token (e.g. "A", "P1") or null if none
-  priorityLabel: string; // The full token as found in text (e.g. "[#A]") for internal use or display if needed, but 'priority' is the sorting key
-  // actually, let's just keep 'priority' as the raw value we extract (e.g. "A") and maybe add 'priorityIndex'?
-  // To keep it simple and flexible:
-  // priority: string | null; -> The raw token value (e.g. "A")
+  priorityLabel: string;       // The full token found in text (e.g. "[#A]") for display reconstruction
   scheduledDate: Date | null; // scheduled date from SCHEDULED: line
   deadlineDate: Date | null;  // deadline date from DEADLINE: line
+  // Phase 21: Original symbols
+  scheduledSymbol?: string;
+  deadlineSymbol?: string;
   tail?: string;   // trailing end characters after the task text (e.g., " */")
 }
 

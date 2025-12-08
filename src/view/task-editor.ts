@@ -85,6 +85,25 @@ export class TaskEditor {
     };
   }
 
+  // Updates task priority
+  async updateTaskPriority(task: Task, newPriority: string | null): Promise<Task> {
+    // Create a temporary task object with the new priority to generate the line
+    const tempTask = { ...task, priority: newPriority };
+
+    // Update label property based on simple heuristic or leave empty to let generateTaskLine fallback
+    if (newPriority) {
+      if (newPriority.startsWith('#')) {
+        tempTask.priorityLabel = `[${newPriority}]`;
+      } else {
+        tempTask.priorityLabel = newPriority;
+      }
+    } else {
+      tempTask.priorityLabel = '';
+    }
+
+    return await this.applyLineUpdate(tempTask, task.state, task.completed);
+  }
+
   // Applt updates to task state
   async updateTaskState(task: Task, nextState: string, isCompleted: boolean): Promise<Task> {
     return await this.applyLineUpdate(task, nextState, isCompleted);

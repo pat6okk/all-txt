@@ -1,8 +1,7 @@
 # ALL.txt
 
 <p align="center">
-  <strong>Keyword-driven state tracking for Obsidian. Track anything in plain Markdown.</strong><br>
-  Tasks, decisions, knowledge, research, sales, legal—define your own states and workflows.
+  <strong>Your notes already know what needs to happen.<br>ALL.txt helps you see it.</strong>
 </p>
 
 <p align="center">
@@ -13,346 +12,158 @@
 
 ---
 
-## 🎯 Overview
+## The Idea
 
-**ALL.txt** is a keyword-driven state machine for Obsidian. Define any states you want (TODO, DOING, DONE, ASK, FACT, PROPOSITION, ACCEPTED, etc.) and build custom workflows. All state changes persist directly in your Markdown—no database, no lock-in.
+Every note you write is full of things in motion: tasks to complete, questions to answer, decisions pending approval, ideas evolving into facts. **ALL.txt** makes those states visible and trackable—without changing how you write.
 
-> **Inspired by TODO.txt**: Lightweight syntax, pure Markdown, fully portable. Copy/paste your notes anywhere and keep full semantics. Perfect for meeting transcripts where an AI extracts keywords to build states automatically.
->
-> **Beyond Tasks**: Track decisions, knowledge, research hypotheses, sales leads, legal approvals, content pipelines, risk mitigation—anything that has states.
-
----
-
-## ✨ Key Features
-
-### 🚀 **Performance & Architecture**
-- **Event-Driven Updates**: No polling loops. Tasks update instantly when files change.
-- **Smart Debouncing**: Intelligent refresh throttling prevents excessive re-scans.
-- **Reactive State Management**: Centralized `TaskStore` with efficient caching.
-
-### 🎨 **Customization**
-- **Custom States**: Define any keywords you want (`TODO`, `DOING`, `ASK`, `FACT`, `PROPOSITION`, `ACCEPTED`, etc.).
-- **Visual Workflows**: Build state transition flows with a drag-and-drop interface (e.g., `ASK → FACT`, `LEAD → QUALIFIED → CLOSED`).
-- **Color Coding**: Assign unique colors to each keyword for visual clarity.
-- **Multi-Priority Queues**: Support multiple independent priority systems (`[#A]`, `[P1]`, etc.).
-
-### 📋 **Task Management**
-- **Inline Persistence**: All changes save directly to Markdown. No external database.
-- **Smart Grouping**: Automatically group tasks by file, state, or priority.
-- **Advanced Sorting**: Sort by priority, scheduled date, deadline, or file order.
-- **Rich Metadata**: Track scheduled dates, deadlines, and priorities per task.
-- **Tooling-friendly**: Compatible with AI or scripts that parse plain text to extract keywords and build task lists (e.g., meeting transcripts).
-
-### 💡 **User Experience**
-- **Unified View**: All vault tasks in one sidebar panel with live updates.
-- **Quick Actions**: Click keywords to cycle states, right-click for context menu.
-- **Jump to Source**: Click task text to instantly navigate to the exact line.
-- **Keyboard-First**: Dedicated commands and hotkeys for power users.
-- **Editor Integration**: Real-time syntax highlighting for all custom keywords.
-
-### 🌍 **Context Support**
-Detects tasks in multiple Markdown contexts:
-- Plain text lines
-- Bullet lists (`-`, `*`, `+`)
-- Numbered lists (`1.`, `2)`)
-- Alphabetic lists (`a.`, `B)`)
-- Checkboxes (`- [ ]`, `- [x]`)
-- Blockquotes (`>`)
-- Callouts (`> [!info]`)
-- Code blocks (optional)
-- Works even outside Obsidian: copy/paste notes to any plain-text medium and keep task keywords intact.
-
----
-
-## 📦 Installation
-
-### Option 1: Community Plugins (Recommended)
-1. Open **Settings** → **Community Plugins**
-2. Disable **Safe Mode**
-3. Click **Browse** and search for **"TODO inline"**
-4. Click **Install** → **Enable**
-
-### Option 2: Manual Installation
-1. Download the latest release from [Releases](https://github.com/pat6okk/todo-inline/releases)
-2. Extract `main.js`, `manifest.json`, `styles.css` to:
-   ```
-   <vault>/.obsidian/plugins/todo-inline/
-   ```
-3. Reload Obsidian
-4. Enable the plugin in **Settings** → **Community Plugins**
-
-### Option 3: Build from Source
-```bash
-git clone https://github.com/pat6okk/todo-inline.git
-cd todo-inline
-npm install
-npm run build
-```
-Copy `main.js`, `manifest.json`, `styles.css` to your vault's plugin folder.
-
----
-
-## 🚀 Quick Start
-
-### 1. Define Tasks in Your Notes
-
-**Basic Task:**
-```markdown
-TODO Write project documentation
-```
-
-**With Checkbox:**
-```markdown
-- [ ] TODO Implement authentication
-```
-
-**With Priority:**
-```markdown
-TODO [#A] Critical bug fix
-```
-
-**With Dates:**
-```markdown
-TODO Review pull requests
-PLAN: <2025-12-10>
-DUE: <2025-12-15>
-```
-
-**In Lists:**
-```markdown
-- TODO Morning standup
-* DOING Code review session
-+ DONE Sprint planning
-```
-
-**In Callouts:**
-```markdown
-> [!tip] TODO
-> Remember to commit your changes
-```
-
-### 2. Open the Task View
-
-- Click the **📋 icon** in the left ribbon, or
-- Use command palette: `Ctrl/Cmd+P` → "Show TODO tasks"
-
-### 3. Interact with Tasks
-
-| Action | Behavior |
-|--------|----------|
-| **Click Keyword** | Cycle to next state in workflow |
-| **Right-Click Keyword** | Open context menu (jump to any state) |
-| **Click Task Text** | Navigate to source file/line |
-| **Toggle Checkbox** | Mark as `DONE` or revert to `TODO` |
-
----
-
-## ⚙️ Configuration
-
-Access settings via **Settings** → **TODO inline**
-
-### 🎨 **Vocabulary (Keywords)**
-
-Define your task states in three categories:
-
-| Category | Default Keywords | Purpose |
-|----------|------------------|---------|
-| **Start States** | `TODO`, `LATER`, `WAIT` | Initial/pending tasks |
-| **In-Progress States** | `DOING`, `NOW`, `IN-PROGRESS` | Active work |
-| **Finished States** | `DONE`, `CANCELED`, `CANCELLED` | Completed tasks |
-
-**Custom Configuration:**
-- Add/remove keywords per category
-- Assign unique colors (RGB/Hex picker)
-- Set custom tooltips
-
-### 🔄 **Workflows (State Transitions)**
-
-Build custom state cycles with visual flow builder:
-
-```
-TODO → DOING → REVIEW → DONE → TODO
-       ↓
-     BLOCKED → TODO
-```
-
-**Features:**
-- Drag-and-drop state ordering
-- Hierarchical flow inheritance
-- Automatic cycle completion (finished states return to start)
-
-### 📊 **Priorities**
-
-Configure multiple priority queues:
-
-**Date Keywords (defaults):**
-```
-PLAN  → Scheduled date
-DUE   → Deadline date
-```
-You can change these keywords in settings.
-
-**Default (numeric queue):**
-```
-[P1] → Critical
-[P2] → Important
-[P3] → Normal
-[P4] → Low
-```
-
-**Custom (letter-based example):**
-```
-[#A] → High
-[#B] → Medium  
-[#C] → Low
-```
-
-### 🎛️ **Advanced Options**
-
-- **Include Callouts**: Parse tasks inside callout blocks
-- **Include Code Blocks**: Detect tasks in code (useful for TODO comments)
-- **Refresh Interval**: Manual scan frequency (10-300s)
-
----
-
-## 📖 Examples
-
-### Project Management Workflow
+Just type a keyword. The plugin does the rest.
 
 ```markdown
-# Project: Website Redesign
-
-TODO [#A] Define requirements
-PLAN: <2025-12-08>
-
-DOING Wireframe homepage
-DUE: <2025-12-10>
-
-REVIEW Backend API integration
-PLAN: <2025-12-12>
-
-DONE Initial mockups approved
+ASK Who owns the migration?
 ```
 
-### Daily Tasks with Context
+Later, when you have the answer:
 
 ```markdown
-## Morning Routine
-
-- [ ] TODO Morning standup (15 min)
-- [ ] DOING Review yesterday's PRs
-- [x] DONE Send weekly report
-
-> [!warning] High Priority
-> TODO [#A] Fix production bug #447
-> DUE: <2025-12-08>
+FACT John owns the migration
 ```
 
-### Multi-State Workflow
+That's it. No special syntax. No databases. Pure Markdown that works everywhere.
+
+---
+
+## Why ALL.txt?
+
+**Inspired by [TODO.txt](http://todotxt.org/)**, but evolved. TODO.txt gave us portable task tracking in plain text. ALL.txt extends that philosophy to *anything with states*:
+
+| Domain | Example Flow |
+|--------|--------------|
+| **Tasks** | `TODO → DOING → DONE` |
+| **Questions** | `ASK → FACT` |
+| **Decisions** | `PROPOSITION → ACCEPTED` or `REJECTED` |
+| **Research** | `HYPOTHESIS → VALIDATED` or `INVALIDATED` |
+| **Content** | `DRAFT → REVIEW → PUBLISHED` |
+| **Sales** | `LEAD → CONTACTED → QUALIFIED → CLOSED` |
+| **Risks** | `RISK → MITIGATED → RESOLVED` |
+| **Learning** | `CONCEPT → UNDERSTOOD → APPLIED` |
+
+You define the states. You define the flows. The plugin adapts to *your* logic.
+
+---
+
+## How It Works
+
+**1. Write naturally.** Use keywords anywhere in your notes:
 
 ```markdown
-TODO Research competitors → 
-DOING Draft proposal → 
-REVIEW Stakeholder feedback → 
-APPROVE Final sign-off → 
-DONE Project launched
+## Meeting Notes - Dec 8
+
+TODO Send proposal to client
+ASK What's the budget timeline?
+PROPOSITION Move deadline to January
+RISK Integration might break legacy systems
+
+- DOING Review competitor analysis
+- DONE Initial research complete
+```
+
+**2. See everything.** Open the sidebar panel to view all tracked items across your vault, grouped and sorted however you want.
+
+**3. Click to advance.** Click a keyword to move it to the next state. `TODO` becomes `DOING`. `ASK` becomes `FACT`. The change saves directly to your Markdown.
+
+**4. Take it anywhere.** Copy your notes to email, wikis, other editors—the keywords stay readable and meaningful. No lock-in.
+
+---
+
+## Perfect For
+
+- **Meeting transcripts**: Paste a transcript, ask an AI to find action items, decisions, and questions. Keywords appear. ALL.txt tracks them.
+- **Research notes**: Track hypotheses as they evolve from ideas to validated findings.
+- **Project management**: Simple task tracking without the overhead of complex tools.
+- **Decision logs**: Never lose track of what was proposed, accepted, or rejected.
+- **Knowledge building**: Mark questions and convert them to facts as you learn.
+
+---
+
+## Installation
+
+**Community Plugins** (when available):  
+Settings → Community Plugins → Browse → Search "ALL.txt" → Install → Enable
+
+**Manual**:  
+Download from [Releases](https://github.com/pat6okk/all-txt/releases), extract to `<vault>/.obsidian/plugins/all-txt/`, reload Obsidian.
+
+---
+
+## Customization
+
+Everything is configurable in Settings → ALL.txt:
+
+- **Define your vocabulary**: Add any keywords you want (states, colors, tooltips)
+- **Build workflows**: Connect states with custom transition rules
+- **Set priorities**: `[P1]`, `[#A]`, or whatever system works for you
+- **Add dates**: `PLAN: <2025-12-15>` or `DUE: <2025-12-31>`
+
+Default keywords work out of the box. Customize when you're ready.
+
+---
+
+## Examples
+
+**Knowledge capture:**
+```markdown
+ASK How does the auth flow work?
+FACT Auth uses OAuth2 with refresh tokens, handled by AuthService
+```
+
+**Decision tracking:**
+```markdown
+PROPOSITION Migrate to TypeScript strict mode
+ACCEPTED Migrate to TypeScript strict mode (approved in sprint review)
+```
+
+**Research workflow:**
+```markdown
+HYPOTHESIS Users prefer dark mode by default
+VALIDATED 85% preference in user survey (n=500)
+```
+
+**Sales pipeline:**
+```markdown
+LEAD Acme Corp - interested in enterprise plan
+CONTACTED Sent proposal and pricing
+QUALIFIED Budget confirmed, decision next week
+CLOSED Contract signed 🎉
 ```
 
 ---
 
-## 🛠️ Development
+## The Vision
 
-### Tech Stack
-- **TypeScript** (strict mode)
-- **React 19** (UI components)
-- **Obsidian Plugin API** (v0.16.0+)
-- **esbuild** (bundling)
-- **Jest** (testing)
+ALL.txt is not a task manager. It's a **state machine for your thoughts**.
 
-### Project Structure
-```
-src/
-├── main.ts                 # Plugin entry point
-├── task.ts                 # Task interface/types
-├── parser/
-│   ├── task-parser.ts      # Core parsing engine
-│   ├── date-parser.ts      # Date extraction
-│   └── language-registry.ts # Multi-language support
-├── services/
-│   ├── task-store.ts       # Centralized task cache
-│   ├── workflow-service.ts # State transition logic
-│   └── settings-service.ts # Configuration management
-├── view/
-│   ├── task-view.tsx       # Main React view
-│   └── task-editor.ts      # Markdown editor integration
-├── ui/
-│   ├── view/               # React components (list, toolbar)
-│   └── settings/           # Settings UI components
-└── editor/
-    └── keyword-highlighter.ts # Syntax highlighting
-```
+The goal: make it effortless to capture, track, and advance *anything* that moves through states—using plain text that stays portable and AI-friendly.
 
-### Build Commands
-
-```bash
-# Development (watch mode)
-npm run dev
-
-# Production build
-npm run build
-
-# Run tests
-npm test
-
-# Version bump
-npm run version
-```
-
-### Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines (what is accepted, tests, privacy, governance).
-
-Quick flow:
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Run tests/build: `npm test` and `npm run build`
-4. Commit: `git commit -m 'Add amazing feature'`
-5. Push and open a PR
+We're building toward:
+- AI-assisted keyword detection from transcripts
+- Contextual state suggestions based on content
+- Outcome-aware auto-completion (detect when something is resolved)
+- Multi-language keyword support
 
 ---
 
-## 📝 Roadmap
+## Contributing
 
-- [ ] Mobile-optimized touch gestures
-- [ ] Improve performance in large vaults
-- [ ] Use AI to build key phrases
-
+See [CONTRIBUTING.md](CONTRIBUTING.md). We welcome bug fixes, performance improvements, and thoughtful feature proposals.
 
 ---
 
-## 🐛 Known Issues
+## License
 
-- Large vaults (>1000 files) may experience initial scan delay
-- Code block task detection may conflict with syntax highlighters
-
-Report bugs via [GitHub Issues](https://github.com/pat6okk/all-txt/issues).
-
----
-
-## 📄 License
-
-[MIT License](LICENSE) © 2025 Pat6okk
-
----
-
-## 🙏 Acknowledgments
-
-- Inspired by the original **TodoSeq** plugin
-- Built with ❤️ for the Obsidian community
-- Thanks to all contributors and testers
+[MIT](LICENSE) © 2025 Pat6okk
 
 ---
 
 <p align="center">
-  <strong>Star ⭐ this repo if you find it useful!</strong>
+  <strong>Star ⭐ if ALL.txt helps you think clearer.</strong>
 </p>

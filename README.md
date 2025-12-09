@@ -1,25 +1,25 @@
-# TODO inline
+# ALL.txt
 
 <p align="center">
-  <strong>A high-performance, reactive task manager for Obsidian</strong><br>
-  Manage tasks directly inside your notes with zero disruption to your Markdown workflow.
+  <strong>Keyword-driven state tracking for Obsidian. Track anything in plain Markdown.</strong><br>
+  Tasks, decisions, knowledge, research, sales, legal—define your own states and workflows.
 </p>
 
 <p align="center">
-  <a href="https://github.com/pat6okk/todo-inline/releases"><img src="https://img.shields.io/github/v/release/pat6okk/todo-inline?style=flat-square" alt="Release"></a>
-  <a href="https://github.com/pat6okk/todo-inline/blob/master/LICENSE"><img src="https://img.shields.io/github/license/pat6okk/todo-inline?style=flat-square" alt="License"></a>
-  <a href="https://github.com/pat6okk/todo-inline/stargazers"><img src="https://img.shields.io/github/stars/pat6okk/todo-inline?style=flat-square" alt="Stars"></a>
+  <a href="https://github.com/pat6okk/all-txt/releases"><img src="https://img.shields.io/github/v/release/pat6okk/all-txt?style=flat-square" alt="Release"></a>
+  <a href="https://github.com/pat6okk/all-txt/blob/master/LICENSE"><img src="https://img.shields.io/github/license/pat6okk/all-txt?style=flat-square" alt="License"></a>
+  <a href="https://github.com/pat6okk/all-txt/stargazers"><img src="https://img.shields.io/github/stars/pat6okk/all-txt?style=flat-square" alt="Stars"></a>
 </p>
 
 ---
 
 ## 🎯 Overview
 
-**TODO inline** transforms your Obsidian vault into a powerful task management system. Tasks are defined directly in your Markdown files using customizable keywords, automatically scanned, and presented in a unified, interactive sidebar view.
+**ALL.txt** is a keyword-driven state machine for Obsidian. Define any states you want (TODO, DOING, DONE, ASK, FACT, PROPOSITION, ACCEPTED, etc.) and build custom workflows. All state changes persist directly in your Markdown—no database, no lock-in.
 
-> **Built for Power Users**: This plugin is a complete rewrite focused on **performance**, **flexibility**, and **clean architecture**. Event-driven updates, zero polling, and full customization.
+> **Inspired by TODO.txt**: Lightweight syntax, pure Markdown, fully portable. Copy/paste your notes anywhere and keep full semantics. Perfect for meeting transcripts where an AI extracts keywords to build states automatically.
 >
-> **Portable by design**: Inspired by the lightweight syntax of **TODO.txt**. Notes remain plain Markdown, so you can copy them anywhere (email, wikis, other editors) without losing task semantics. Perfect for meeting transcripts where an AI extracts keywords to build tasks automatically.
+> **Beyond Tasks**: Track decisions, knowledge, research hypotheses, sales leads, legal approvals, content pipelines, risk mitigation—anything that has states.
 
 ---
 
@@ -31,8 +31,8 @@
 - **Reactive State Management**: Centralized `TaskStore` with efficient caching.
 
 ### 🎨 **Customization**
-- **Custom Keywords**: Define your own task states (`TODO`, `DOING`, `WAITING`, `REVIEW`, etc.).
-- **Visual Workflows**: Build state transition flows with a drag-and-drop interface.
+- **Custom States**: Define any keywords you want (`TODO`, `DOING`, `ASK`, `FACT`, `PROPOSITION`, `ACCEPTED`, etc.).
+- **Visual Workflows**: Build state transition flows with a drag-and-drop interface (e.g., `ASK → FACT`, `LEAD → QUALIFIED → CLOSED`).
 - **Color Coding**: Assign unique colors to each keyword for visual clarity.
 - **Multi-Priority Queues**: Support multiple independent priority systems (`[#A]`, `[P1]`, etc.).
 
@@ -335,7 +335,7 @@ Quick flow:
 - Large vaults (>1000 files) may experience initial scan delay
 - Code block task detection may conflict with syntax highlighters
 
-Report bugs via [GitHub Issues](https://github.com/pat6okk/todo-inline/issues).
+Report bugs via [GitHub Issues](https://github.com/pat6okk/all-txt/issues).
 
 ---
 

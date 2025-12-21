@@ -30,8 +30,6 @@ data.json
 coverage/
 
 # Private development files (not for publication)
-.agent/
-00/
-analysis/
+
 .github/copilot-instructions.md
 .github/RELEASE_PROCESS.md

@@ -143,6 +143,7 @@ export class TaskParser {
 
   /**
    * Build regex patterns with customizable components
+   * US-1.1: Strict Header Detection - Only detects keywords at line start (with optional indentation)
    * @param keywords Array of task keywords
    * @returns RegexPair for testing and capturing tasks
    */
@@ -152,12 +153,16 @@ export class TaskParser {
 
     const escaped_keywords = TaskParser.escapeKeywords(keywords);
 
+    // US-1.1: Simplified regex - no list markers, no checkboxes, no blockquotes
+    // Format: ^(\s*)(KEYWORD)\s+(.*)
+    // Group 1: Leading whitespace (indentation)
+    // Group 2: The keyword
+    // Group 3: The task text
     const test = new RegExp(
-      `^(${STANDARD_PREFIX}|${QUOTED_PREFIX}|${CALLOUT_PREFIX})?`
-      + `(${BULLET_LIST_PATTERN}|${NUMBERED_LIST_PATTERN}|${LETTER_LIST_PATTERN}|${CUSTOM_LIST_PATTERN})??`
-      + `(${CHECKBOX})?`
-      + `(${escaped_keywords})\\s+`
-      + `(${TASK_TEXT})$`
+      `^(\\s*)`                    // Leading whitespace only
+      + `(${escaped_keywords})`   // Keyword
+      + `\\s+`                     // Required space after keyword
+      + `(.+)$`                    // Task text (rest of line)
     );
     const capture = test;
     return { test, capture };
@@ -198,6 +203,7 @@ export class TaskParser {
 
   /**
    * Extract task details from a line using appropriate regex
+   * US-1.1: Updated for simplified regex groups
    * @param line The line containing the task
    * @returns Parsed task details
    */
@@ -214,19 +220,16 @@ export class TaskParser {
       throw new Error(`Failed to parse task line: ${line}`);
     }
 
-    // For default regex, the task text is everything after the captured keyword
+    // US-1.1: Simplified regex groups
     // m[0] is the full match
-    // m[1] is the indent (spacing, prefix text, comment characters )
-    // m[2] is the list marker
-    // m[3] is the checkbox
-    // m[4] is the state keyword
-    // m[5] is the task text
-    // m[6] is the closing comment characters
+    // m[1] is the leading whitespace (indentation)
+    // m[2] is the state keyword
+    // m[3] is the task text
     const indent = m[1] || "";
-    const listMarker = (m[2] || "") + (m[3] || "");
-    const state = m[4]
-    const taskText = m[5];
-    const tail = m[6]
+    const listMarker = ""; // No list markers in strict mode
+    const state = m[2];
+    const taskText = m[3];
+    const tail = ""; // No tail in strict mode
 
     return {
       indent,
@@ -499,9 +502,10 @@ export class TaskParser {
       // Extract priority
       const { priority, priorityLabel, cleanedText } = this.extractPriority(taskDetails.taskText);
 
-      // Extract checkbox state
-      const { state: finalState, completed: finalCompleted, listMarker: finalListMarker } =
-        this.extractCheckboxState(line, taskDetails.state, taskDetails.listMarker);
+      // US-1.1: No checkbox extraction needed in strict mode
+      // State is directly from the keyword, completed status from completedKeywords set
+      const finalState = taskDetails.state;
+      const finalCompleted = this.completedKeywords.has(finalState);
 
       // Initialize task with date fields
       const task: Task = {
@@ -509,7 +513,7 @@ export class TaskParser {
         line: index,
         rawText: line,
         indent: taskDetails.indent,
-        listMarker: finalListMarker,
+        listMarker: taskDetails.listMarker, // Will be empty string in strict mode
         text: cleanedText,
         state: finalState,
         completed: finalCompleted,

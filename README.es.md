@@ -1,20 +1,20 @@
-# ALL.txt
+# FLOW.txt
 
 <p align="center">
-  <strong>Tus notas ya saben qué debe pasar.<br>ALL.txt te ayuda a verlo.</strong>
+  <strong>Tus notas ya saben qué debe pasar.<br>FLOW.txt te ayuda a verlo.</strong>
 </p>
 
 <p align="center">
-  <a href="https://github.com/pat6okk/all-txt/releases"><img src="https://img.shields.io/github/v/release/pat6okk/all-txt?style=flat-square" alt="Release"></a>
-  <a href="https://github.com/pat6okk/all-txt/blob/master/LICENSE"><img src="https://img.shields.io/github/license/pat6okk/all-txt?style=flat-square" alt="License"></a>
-  <a href="https://github.com/pat6okk/all-txt/stargazers"><img src="https://img.shields.io/github/stars/pat6okk/all-txt?style=flat-square" alt="Stars"></a>
+  <a href="https://github.com/pat6okk/flow-txt/releases"><img src="https://img.shields.io/github/v/release/pat6okk/flow-txt?style=flat-square" alt="Release"></a>
+  <a href="https://github.com/pat6okk/flow-txt/blob/master/LICENSE"><img src="https://img.shields.io/github/license/pat6okk/flow-txt?style=flat-square" alt="License"></a>
+  <a href="https://github.com/pat6okk/flow-txt/stargazers"><img src="https://img.shields.io/github/stars/pat6okk/flow-txt?style=flat-square" alt="Stars"></a>
 </p>
 
 ---
 
 ## La Idea
 
-Cada nota que escribes está llena de cosas en movimiento: tareas por completar, preguntas por responder, decisiones pendientes de aprobación, ideas evolucionando hacia hechos. **ALL.txt** hace esos estados visibles y rastreables—sin cambiar cómo escribes.
+Cada nota que escribes está llena de cosas en movimiento: tareas por completar, preguntas por responder, decisiones pendientes de aprobación, ideas evolucionando hacia hechos. **FLOW.txt** hace esos estados visibles y rastreables—sin cambiar cómo escribes.
 
 Solo escribe una palabra clave. El plugin hace el resto.
 
@@ -32,9 +32,9 @@ Eso es todo. Sin sintaxis especial. Sin bases de datos. Markdown puro que funcio
 
 ---
 
-## Por qué ALL.txt?
+## Por qué FLOW.txt?
 
-**Inspirado en [TODO.txt](http://todotxt.org/)**, pero evolucionado. TODO.txt nos dio seguimiento de tareas portátil en texto plano. ALL.txt extiende esa filosofía a *cualquier cosa con estados*:
+**Inspirado en [TODO.txt](http://todotxt.org/)**, pero evolucionado. TODO.txt nos dio seguimiento de tareas portátil en texto plano. FLOW.txt extiende esa filosofía a *cualquier cosa con estados*:
 
 | Dominio | Flujo de Ejemplo |
 |---------|------------------|
@@ -77,7 +77,7 @@ RISK La integración podría romper sistemas legacy
 
 ## Perfecto Para
 
-- **Transcripciones de reuniones**: Pega una transcripción, pídele a una IA que encuentre acciones, decisiones y preguntas. Aparecen palabras clave. ALL.txt las rastrea.
+- **Transcripciones de reuniones**: Pega una transcripción, pídele a una IA que encuentre acciones, decisiones y preguntas. Aparecen palabras clave. FLOW.txt las rastrea.
 - **Notas de investigación**: Rastrea hipótesis mientras evolucionan de ideas a hallazgos validados.
 - **Gestión de proyectos**: Seguimiento de tareas simple sin la complejidad de herramientas pesadas.
 - **Registro de decisiones**: Nunca pierdas el rastro de lo que fue propuesto, aceptado o rechazado.
@@ -88,16 +88,16 @@ RISK La integración podría romper sistemas legacy
 ## Instalación
 
 **Community Plugins** (cuando esté disponible):  
-Settings → Community Plugins → Browse → Buscar "ALL.txt" → Install → Enable
+Settings → Community Plugins → Browse → Buscar "FLOW.txt" → Install → Enable
 
 **Manual**:  
-Descarga desde [Releases](https://github.com/pat6okk/all-txt/releases), extrae en `<vault>/.obsidian/plugins/all-txt/`, recarga Obsidian.
+Descarga desde [Releases](https://github.com/pat6okk/flow-txt/releases), extrae en `<vault>/.obsidian/plugins/flow-txt/`, recarga Obsidian.
 
 ---
 
 ## Personalización
 
-Todo es configurable en Settings → ALL.txt:
+Todo es configurable en Settings → FLOW.txt:
 
 - **Define tu vocabulario**: Añade las palabras clave que quieras (estados, colores, tooltips)
 - **Construye workflows**: Conecta estados con reglas de transición personalizadas
@@ -140,7 +140,7 @@ CLOSED Contrato firmado 🎉
 
 ## La Visión
 
-ALL.txt no es un gestor de tareas. Es una **máquina de estados para tus pensamientos**.
+FLOW.txt no es un gestor de tareas. Es una **máquina de estados para tus pensamientos**.
 
 El objetivo: hacer que sea fácil capturar, rastrear y avanzar *cualquier cosa* que se mueva a través de estados—usando texto plano que se mantiene portable y amigable con IA.
 
@@ -165,5 +165,5 @@ Ver [CONTRIBUTING.md](CONTRIBUTING.md). Damos la bienvenida a correcciones de bu
 ---
 
 <p align="center">
-  <strong>Dale ⭐ si ALL.txt te ayuda a pensar con más claridad.</strong>
+  <strong>Dale ⭐ si FLOW.txt te ayuda a pensar con más claridad.</strong>
 </p>

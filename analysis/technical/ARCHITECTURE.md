@@ -6,7 +6,7 @@
 
 ## Descripción General
 
-El plugin ALL.txt está organizado en **4 componentes principales** que trabajan juntos para capturar, visualizar y gestionar items de estado rastreados en Markdown.
+El plugin FLOW.txt está organizado en **4 componentes principales** que trabajan juntos para capturar, visualizar y gestionar items de estado rastreados en Markdown.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐

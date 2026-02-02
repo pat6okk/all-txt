@@ -1,4 +1,4 @@
-# Mejores Prácticas para Usuarios de ALL.txt
+# Mejores Prácticas para Usuarios de FLOW.txt
 
 **Guía para configurar y usar el plugin de manera óptima.**
 
@@ -25,26 +25,26 @@ Elige **uno solo** basado en tu dominio:
 
 #### Opción A: Números (P1-P3)
 ```markdown
-TODO [P1] Revisar código    → Crítico, hacer hoy
-TODO [P2] Mejorar UI        → Importante, esta semana
-TODO [P3] Documentar        → Nice-to-have, próximo mes
+TODO P1 Revisar código    → Crítico, hacer hoy
+TODO P2 Mejorar UI        → Importante, esta semana
+TODO P3 Documentar        → Nice-to-have, próximo mes
 ```
 **Ventajas:** Estándar de industria, conciso, usado en Jira/Linear
 
 #### Opción B: Palabras (ALTA, MEDIA, BAJA)
 ```markdown
-TODO [ALTA] Propuesta cliente    → Urgente
-TODO [MEDIA] Fix en dashboard    → Importante
-TODO [BAJA] Limpiar código       → Puede esperar
+TODO ALTA Propuesta cliente    → Urgente
+TODO MEDIA Fix en dashboard    → Importante
+TODO BAJA Limpiar código       → Puede esperar
 ```
 **Ventajas:** Lenguaje natural, fácil para no-técnicos
 
-### Configurar en ALL.txt
+### Configurar en FLOW.txt
 
-1. **Settings** → ALL.txt → Vocabulary → "In-Progress"
-2. **Añade tu sistema:** `[P1]`, `[P2]`, `[P3]` O `[ALTA]`, `[MEDIA]`, `[BAJA]`
+1. **Settings** → FLOW.txt → Vocabulary → "In-Progress"
+2. **Añade tu sistema:** `P1`, `P2`, `P3` O `ALTA`, `MEDIA`, `BAJA`
 3. **Asigna colores:** Rojo (urgente) → Amarillo (medio) → Verde (bajo)
-4. **Nunca mezcles** en un mismo documento
+4. **Nunca mezcles** en una misma linea.
 
 ---
 
@@ -120,12 +120,12 @@ TODO Completar propuesta SCHEDULED: 2025-12-20 DEADLINE: 2025-12-25
 
 ```markdown
 # ✅ Coloca la prioridad DESPUÉS del keyword, ANTES del texto
-TODO [P1] Revisar código de seguridad
+TODO P1 Revisar código de seguridad
 
 # ❌ EVITA estos formatos
-❌ [P1] TODO Revisar código           (incorrecto)
-❌ TODO Revisar código [P1]           (difícil de leer)
-❌ TODO [P1] [URGENTE] Revisar código (dos sistemas)
+❌ P1 TODO Revisar código           (incorrecto)
+❌ TODO Revisar código P1           (difícil de leer)
+❌ TODO P1 URGENTE Revisar código (dos sistemas)
 ```
 
 ---
@@ -209,10 +209,10 @@ Evita tener archivos > 5000 líneas:
 
 ### Recomendación: Standarizar Vocabulario
 
-Crea un documento compartido en tu bóveda (ej: `Standards/ALL.txt.md`):
+Crea un documento compartido en tu bóveda (ej: `Standards/FLOW.txt.md`):
 
 ```markdown
-# ALL.txt Vocabulary Standard
+# FLOW.txt Vocabulary Standard
 
 ## Keywords Permitidos
 
@@ -232,19 +232,19 @@ Crea un documento compartido en tu bóveda (ej: `Standards/ALL.txt.md`):
 - DUPLICATE: Duplicado (referencia a otro)
 
 ## Prioridades (En In-Progress)
-- [P1]: Crítico, hacer hoy
-- [P2]: Importante, esta semana
-- [P3]: Nice-to-have, próximo mes
+- P1: Crítico, hacer hoy
+- P2: Importante, esta semana
+- P3: Nice-to-have, próximo mes
 
 ## Ejemplos
 
 ✅ Correcto:
-- TODO [P1] Revisar seguridad
+- TODO P1 Revisar seguridad
   DEADLINE: 2025-12-20
 
 ❌ Incorrecto:
 - TODO URGENT Revisar seguridad (doble prioridad)
-- REVIEW [P1] [P2] Revisar (ambiguo)
+- REVIEW P1 P2 Revisar (ambiguo)
 ```
 
 ### Sincronización
@@ -296,9 +296,9 @@ Como archivos son plain Markdown:
 - [ ] Fix bug #234
   due: 2025-12-20
 
-# ALL.txt format
-- TODO Fix bug #234
-  DEADLINE: 2025-12-20
+# FLOW.txt format
+TODO Fix bug #234
+DEADLINE: 2025-12-20
 ```
 
 **Ventajas:** Workflows personalizables, prioridades, sintaxis más limpia.

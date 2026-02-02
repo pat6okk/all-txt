@@ -1,20 +1,20 @@
-# ALL.txt
+# FLOW.txt
 
 <p align="center">
-  <strong>Your notes already know what needs to happen.<br>ALL.txt helps you see it.</strong>
+  <strong>Your notes already know what needs to happen.<br>FLOW.txt helps you see it.</strong>
 </p>
 
 <p align="center">
-  <a href="https://github.com/pat6okk/all-txt/releases"><img src="https://img.shields.io/github/v/release/pat6okk/all-txt?style=flat-square" alt="Release"></a>
-  <a href="https://github.com/pat6okk/all-txt/blob/master/LICENSE"><img src="https://img.shields.io/github/license/pat6okk/all-txt?style=flat-square" alt="License"></a>
-  <a href="https://github.com/pat6okk/all-txt/stargazers"><img src="https://img.shields.io/github/stars/pat6okk/all-txt?style=flat-square" alt="Stars"></a>
+  <a href="https://github.com/pat6okk/flow-txt/releases"><img src="https://img.shields.io/github/v/release/pat6okk/flow-txt?style=flat-square" alt="Release"></a>
+  <a href="https://github.com/pat6okk/flow-txt/blob/master/LICENSE"><img src="https://img.shields.io/github/license/pat6okk/flow-txt?style=flat-square" alt="License"></a>
+  <a href="https://github.com/pat6okk/flow-txt/stargazers"><img src="https://img.shields.io/github/stars/pat6okk/flow-txt?style=flat-square" alt="Stars"></a>
 </p>
 
 ---
 
 ## The Idea
 
-Every note you write is full of things in motion: tasks to complete, questions to answer, decisions pending approval, ideas evolving into facts. **ALL.txt** makes those states visible and trackable—without changing how you write.
+Every note you write is full of things in motion: tasks to complete, questions to answer, decisions pending approval, ideas evolving into facts. **FLOW.txt** makes those states visible and trackable—without changing how you write.
 
 Just type a keyword. The plugin does the rest.
 
@@ -32,9 +32,9 @@ That's it. No special syntax. No databases. Pure Markdown that works everywhere.
 
 ---
 
-## Why ALL.txt?
+## Why FLOW.txt?
 
-**Inspired by [TODO.txt](http://todotxt.org/)**, but evolved. TODO.txt gave us portable task tracking in plain text. ALL.txt extends that philosophy to *anything with states*:
+**Inspired by [TODO.txt](http://todotxt.org/)**, but evolved. TODO.txt gave us portable task tracking in plain text. FLOW.txt extends that philosophy to *anything with states*:
 
 | Domain | Example Flow |
 |--------|--------------|
@@ -77,7 +77,7 @@ RISK Integration might break legacy systems
 
 ## Perfect For
 
-- **Meeting transcripts**: Paste a transcript, ask an AI to find action items, decisions, and questions. Keywords appear. ALL.txt tracks them.
+- **Meeting transcripts**: Paste a transcript, ask an AI to find action items, decisions, and questions. Keywords appear. FLOW.txt tracks them.
 - **Research notes**: Track hypotheses as they evolve from ideas to validated findings.
 - **Project management**: Simple task tracking without the overhead of complex tools.
 - **Decision logs**: Never lose track of what was proposed, accepted, or rejected.
@@ -88,16 +88,16 @@ RISK Integration might break legacy systems
 ## Installation
 
 **Community Plugins** (when available):  
-Settings → Community Plugins → Browse → Search "ALL.txt" → Install → Enable
+Settings → Community Plugins → Browse → Search "FLOW.txt" → Install → Enable
 
 **Manual**:  
-Download from [Releases](https://github.com/pat6okk/all-txt/releases), extract to `<vault>/.obsidian/plugins/all-txt/`, reload Obsidian.
+Download from [Releases](https://github.com/pat6okk/flow-txt/releases), extract to `<vault>/.obsidian/plugins/flow-txt/`, reload Obsidian.
 
 ---
 
 ## Customization
 
-Everything is configurable in Settings → ALL.txt:
+Everything is configurable in Settings → FLOW.txt:
 
 - **Define your vocabulary**: Add any keywords you want (states, colors, tooltips)
 - **Build workflows**: Connect states with custom transition rules
@@ -140,7 +140,7 @@ CLOSED Contract signed 🎉
 
 ## The Vision
 
-ALL.txt is not a task manager. It's a **state machine for your thoughts**.
+FLOW.txt is not a task manager. It's a **state machine for your thoughts**.
 
 The goal: make it effortless to capture, track, and advance *anything* that moves through states—using plain text that stays portable and AI-friendly.
 
@@ -165,5 +165,5 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). We welcome bug fixes, performance improv
 ---
 
 <p align="center">
-  <strong>Star ⭐ if ALL.txt helps you think clearer.</strong>
+  <strong>Star ⭐ if FLOW.txt helps you think clearer.</strong>
 </p>

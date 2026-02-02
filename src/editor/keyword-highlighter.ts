@@ -33,8 +33,8 @@ export function keywordHighlighter(getSettings: () => TodoTrackerSettings): Exte
     if (keywordMap.size === 0) return [];
 
     // 3. Build Regex
-    // Matches: [whitespace or start of line] + KEYWORD + [whitespace or end of line]
-    // We use word boundary \b for safety.
+    // US-1.1: Strict matching - only at start of line (with optional indentation)
+    // This now matches exactly what the parser detects, eliminating false positives
     const escapedKeywords = Array.from(keywordMap.keys())
         .filter(k => k && k.length > 0)
         .map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
@@ -42,7 +42,9 @@ export function keywordHighlighter(getSettings: () => TodoTrackerSettings): Exte
 
     if (!escapedKeywords) return [];
 
-    const regexp = new RegExp(`\\b(${escapedKeywords})\\b`, 'g');
+    // Format: ^(\s*)(KEYWORD)\b
+    // This ensures we only highlight keywords at the start of a line
+    const regexp = new RegExp(`^(\\s*)(${escapedKeywords})\\b`, 'gm');
 
     // 4. Helper for contrast color
     const getContrastColor = (hexcolor: string): string => {
@@ -63,7 +65,8 @@ export function keywordHighlighter(getSettings: () => TodoTrackerSettings): Exte
         const decorator = new MatchDecorator({
             regexp,
             decoration: (match) => {
-                const keyword = match[1].toUpperCase();
+                // US-1.1: match[1] is whitespace, match[2] is the keyword
+                const keyword = match[2].toUpperCase();
                 const color = keywordMap.get(keyword) || '#888888';
                 const contrast = getContrastColor(color);
 

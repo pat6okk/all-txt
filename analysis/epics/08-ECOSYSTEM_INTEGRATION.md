@@ -13,7 +13,7 @@
 **Estado:** 🟡 Parcial (No testeado exhaustivamente)
 
 **Historia:**
-Como usuario de Dataview, Tasks u otros plugins, quiero que ALL.txt coexista sin conflictos, para combinar funcionalidades sin errores.
+Como usuario de Dataview, Tasks u otros plugins, quiero que FLOW.txt coexista sin conflictos, para combinar funcionalidades sin errores.
 
 **Criterios de Aceptación:**
 - ⚠️ No interfiere con sintaxis de Dataview (`TASK`, `DUE`) - necesita testing

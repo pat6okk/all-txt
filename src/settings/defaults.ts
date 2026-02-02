@@ -3,6 +3,14 @@ import { TaskViewMode } from "../task";
 import { LanguageCommentSupportSettings, LanguageDefinition } from "../parser/language-registry";
 
 export type SortMethod = 'default' | 'sortByScheduled' | 'sortByDeadline' | 'sortByPriority';
+export type GroupingMethod = 'none' | 'byState' | 'byFile';
+export type DateFilterMode = 'all' | 'overdue' | 'today' | 'thisWeek' | 'noDate';
+
+export interface AdvancedFilters {
+    states: string[]; // Empty array = show all states
+    priorities: string[]; // Empty array = show all priorities
+    dateMode: DateFilterMode;
+}
 
 export interface TodoTrackerSettings {
     // Custom keyword groups
@@ -28,6 +36,8 @@ export interface TodoTrackerSettings {
 
     // Persistence
     sortMethod: SortMethod;
+    groupingMethod: GroupingMethod;
+    advancedFilters: AdvancedFilters;
     collapsedPaths: string[];
 
     languageCommentSupport: LanguageCommentSupportSettings;
@@ -73,6 +83,12 @@ export const DEFAULT_SETTINGS: TodoTrackerSettings = {
     includeCodeBlocks: false,
     taskViewMode: 'default',
     sortMethod: 'default',
+    groupingMethod: 'none',
+    advancedFilters: {
+        states: [],
+        priorities: [],
+        dateMode: 'all'
+    },
     collapsedPaths: [],
     languageCommentSupport: {
         enabled: true,

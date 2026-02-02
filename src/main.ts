@@ -1,4 +1,4 @@
-import { Plugin, TFile, TAbstractFile, WorkspaceLeaf } from 'obsidian';
+import { Plugin, TFile, TAbstractFile, WorkspaceLeaf, Editor } from 'obsidian';
 import { Task, TaskViewMode } from './task';
 import { TodoView, TASK_VIEW_ICON } from "./view/task-view";
 import { TodoTrackerSettingTab } from "./settings/settings";
@@ -83,6 +83,76 @@ export default class TodoInlinePlugin extends Plugin {
     this.registerEvent(
       this.app.vault.on('rename', (file, oldPath) => this.taskStore.handleFileRename(file, oldPath))
     );
+
+    // US-1.5: Register Editor Context Menu for Quick Conversion
+    this.registerEvent(
+      this.app.workspace.on('editor-menu', (menu, editor) => {
+        const selection = editor.getSelection();
+        const line = editor.getLine(editor.getCursor().line).trim();
+        if (!selection && !line) return;
+
+        // Use a single menu item that opens a submenu with all Start States
+        menu.addItem((item) => {
+          item
+            .setTitle('Convert to FLOW block...')
+            .setIcon('SheetsInCircuit')
+            .setSection('action');
+
+          // @ts-ignore - The Obsidian API supports submenus in recent versions via this pattern
+          const subMenu = item.setSubmenu ? item.setSubmenu() : null;
+
+          const keywords = this.settings.todoKeywords || ['TODO'];
+
+          keywords.forEach((kw) => {
+            if (subMenu) {
+              subMenu.addItem((subItem: any) => {
+                subItem
+                  .setTitle(`${kw} Block`)
+                  .onClick(() => this.convertSelectedToFlow(editor, kw));
+              });
+            } else {
+              // Fallback for older API versions: add them as separate top-level items if submenu is not available
+              menu.addItem((topItem) => {
+                topItem
+                  .setTitle(`Convert to ${kw} block`)
+                  .setIcon('SheetsInCircuit')
+                  .setSection('action')
+                  .onClick(() => this.convertSelectedToFlow(editor, kw));
+              });
+            }
+          });
+        });
+      })
+    );
+  }
+
+  /**
+   * US-1.5: Logic to convert selected text or current line into a FLOW block
+   * Refined to preserve original structure (bullets, checkboxes)
+   */
+  private convertSelectedToFlow(editor: Editor, keyword: string) {
+    const selection = editor.getSelection();
+    const cursor = editor.getCursor();
+
+    let textToConvert = selection ? selection : editor.getLine(cursor.line);
+    let from = selection ? editor.getCursor('from') : { line: cursor.line, ch: 0 };
+    let to = selection ? editor.getCursor('to') : { line: cursor.line, ch: textToConvert.length };
+
+    // 1. Identify leading indentation of the first line
+    const lines = textToConvert.split('\n');
+    const firstLine = lines[0];
+    const indentMatch = firstLine.match(/^(\s*)/);
+    const indent = indentMatch ? indentMatch[0] : "";
+
+    // 2. Remove the indent from the first line so we can place the keyword between it and the text
+    const cleanFirstLine = firstLine.replace(/^(\s*)/, '');
+    const otherLines = lines.slice(1).join('\n');
+    const fullText = otherLines ? `${cleanFirstLine}\n${otherLines}` : cleanFirstLine;
+
+    // 3. Construct the block: [INDENT][KEYWORD] [REST_OF_TEXT]
+    const newBlock = `${indent}${keyword} ${fullText.trimEnd()}\n\n---`;
+
+    editor.replaceRange(newBlock, from, to);
   }
 
   /**
@@ -141,17 +211,21 @@ export default class TodoInlinePlugin extends Plugin {
 
     if (leaves.length > 0) {
       leaf = leaves[0];
-      const activeLeaf = workspace.activeLeaf;
-      if (activeLeaf !== leaf) {
-        await workspace.revealLeaf(leaf);
-      }
     } else {
-      leaf = workspace.getLeaf(true);
-      await leaf.setViewState({ type: TodoView.viewType, active: true });
-      const activeLeaf = workspace.activeLeaf;
-      if (activeLeaf !== leaf) {
-        await workspace.revealLeaf(leaf);
+      // US-2.1: Open in the right sidebar leaf by default
+      const rightLeaf = workspace.getRightLeaf(false);
+      if (rightLeaf) {
+        await rightLeaf.setViewState({ type: TodoView.viewType, active: true });
+        leaf = rightLeaf;
+      } else {
+        // Fallback if no right leaf is available (unexpected)
+        leaf = workspace.getLeaf(true);
+        await leaf.setViewState({ type: TodoView.viewType, active: true });
       }
+    }
+
+    if (leaf) {
+      workspace.revealLeaf(leaf);
     }
   }
 }

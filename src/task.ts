@@ -1,4 +1,11 @@
 
+export interface SubTask {
+  indent: string;
+  text: string;
+  completed: boolean;
+  line: number;
+}
+
 export interface Task {
   path: string;    // path to the page in the vault
   line: number;    // line number of the task in the page
@@ -12,10 +19,15 @@ export interface Task {
   priorityLabel: string;       // The full token found in text (e.g. "[#A]") for display reconstruction
   scheduledDate: Date | null; // scheduled date from SCHEDULED: line
   deadlineDate: Date | null;  // deadline date from DEADLINE: line
-  // Phase 21: Original symbols
+  // Phase 1: Original symbols
   scheduledSymbol?: string;
   deadlineSymbol?: string;
   tail?: string;   // trailing end characters after the task text (e.g., " */")
+
+  // Phase 2: Block Content
+  blockContent?: string[];
+  subtasks?: SubTask[];
+  blockEndLine?: number;
 }
 
 export type TaskViewMode = 'default' | 'sortCompletedLast' | 'hideCompleted';

@@ -1,7 +1,8 @@
 import * as React from 'react';
 import { setIcon } from 'obsidian';
 import { TaskViewMode } from '../../task';
-import { SortMethod } from '../../settings/defaults';
+import { SortMethod, GroupingMethod, AdvancedFilters } from '../../settings/defaults';
+import { AdvancedFiltersPanel } from './AdvancedFiltersPanel';
 
 interface TodoToolbarProps {
     searchQuery: string;
@@ -10,18 +11,29 @@ interface TodoToolbarProps {
     onViewModeChange: (mode: TaskViewMode) => void;
     sortMethod: SortMethod;
     onSortMethodChange: (method: SortMethod) => void;
+    groupingMethod: GroupingMethod;
+    onGroupingMethodChange: (method: GroupingMethod) => void;
+    advancedFilters: AdvancedFilters;
+    onAdvancedFiltersChange: (filters: AdvancedFilters) => void;
     filterActive: boolean;
     onFilterActiveChange: (active: boolean) => void;
     taskCount: number;
     totalCount: number;
+    // Dynamic options
+    availableStates?: string[];
+    availablePriorities?: string[];
 }
 
 export const TodoToolbar: React.FC<TodoToolbarProps> = ({
     searchQuery, onSearchChange,
     viewMode, onViewModeChange,
     sortMethod, onSortMethodChange,
+    groupingMethod, onGroupingMethodChange,
+    advancedFilters, onAdvancedFiltersChange,
     filterActive, onFilterActiveChange,
-    taskCount, totalCount
+    taskCount, totalCount,
+    availableStates = [],
+    availablePriorities = []
 }) => {
 
     // Refs for icons
@@ -97,7 +109,24 @@ export const TodoToolbar: React.FC<TodoToolbarProps> = ({
                     <option value="sortByDeadline">Deadline date</option>
                     <option value="sortByPriority">Priority</option>
                 </select>
+                <select
+                    className="dropdown"
+                    value={groupingMethod}
+                    onChange={(e) => onGroupingMethodChange(e.target.value as GroupingMethod)}
+                >
+                    <option value="none">No grouping</option>
+                    <option value="byState">Group by state</option>
+                    <option value="byFile">Group by file</option>
+                </select>
             </div>
+
+            {/* Advanced Filters Panel */}
+            <AdvancedFiltersPanel
+                filters={advancedFilters}
+                onChange={onAdvancedFiltersChange}
+                availableStates={availableStates}
+                availablePriorities={availablePriorities}
+            />
         </div>
     );
 };

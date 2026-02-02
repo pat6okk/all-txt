@@ -101,8 +101,8 @@ Everything is configurable in Settings → FLOW.txt:
 
 - **Define your vocabulary**: Add any keywords you want (states, colors, tooltips)
 - **Build workflows**: Connect states with custom transition rules
-- **Set priorities**: `[P1]`, `[#A]`, or whatever system works for you
-- **Add dates**: `PLAN: <2025-12-15>` or `DUE: <2025-12-31>`
+- **Set priorities**: `P1`, `A`, or whatever system works for you
+- **Add dates**: `PLAN: 2025-12-15` or `DUE: 2025-12-31`
 
 Default keywords work out of the box. Customize when you're ready.
 

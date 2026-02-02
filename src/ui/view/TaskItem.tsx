@@ -38,6 +38,12 @@ export const TaskItem: React.FC<TaskItemProps> = ({
     keywordDescriptions, scheduledColor, deadlineColor, scheduledKeyword, deadlineKeyword,
     onUpdatePriority, onPriorityContextMenu, getNextPriority
 }) => {
+    // State for expanding/collapsing block content
+    const [expanded, setExpanded] = React.useState(false);
+
+    // Only show expander if there are actual subtasks OR non-empty text content
+    const hasRealTextContent = task.blockContent && task.blockContent.some(line => line.trim().length > 0);
+    const hasBlockContent = (task.subtasks && task.subtasks.length > 0) || hasRealTextContent;
 
     const color = getKeywordColor(task.state);
     const contrast = getContrastColor(color);
@@ -49,9 +55,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
     };
 
     const handlePriorityClick = (e: React.MouseEvent) => {
-        // Phase 21: Clicking priority no longer cycles, but prevents opening file
         e.stopPropagation();
-        // Option: Select the task line?
         onOpenTask(task, e);
     };
 
@@ -59,6 +63,12 @@ export const TaskItem: React.FC<TaskItemProps> = ({
         e.preventDefault();
         e.stopPropagation();
         onPriorityContextMenu(task, e);
+    };
+
+    // Toggle expand/collapse
+    const handleToggleExpand = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setExpanded(!expanded);
     };
 
     // Robust priority color lookup
@@ -73,20 +83,39 @@ export const TaskItem: React.FC<TaskItemProps> = ({
     return (
         <li className="todo-item" data-path={task.path} data-line={task.line} onClick={(e) => {
             const target = e.target as HTMLElement;
-            // Prevent opening file if clicking badge or checkbox or priority
-            if (target.tagName !== 'INPUT' && !target.classList.contains('todo-keyword') && !target.classList.contains('priority-badge') && !target.classList.contains('clickable-icon')) {
+            // Prevent opening file if clicking badge or checkbox or priority or expander
+            if (target.tagName !== 'INPUT' &&
+                !target.classList.contains('todo-keyword') &&
+                !target.classList.contains('priority-badge') &&
+                !target.classList.contains('todo-expander') &&
+                !target.classList.contains('clickable-icon')) {
                 onOpenTask(task, e);
             }
         }}>
-            {/* Main Row: Checkbox, Status, Priority, Text */}
+            {/* Main Row: Expander, Checkbox, Status, Priority, Text */}
             <div className="todo-main-row" style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                <input
-                    type="checkbox"
-                    className="todo-checkbox"
-                    checked={task.completed}
-                    onChange={() => onToggle(task)}
-                    style={{ marginTop: '4px' }}
-                />
+
+                {/* Expander Icon */}
+                <div
+                    className={`todo-expander ${hasBlockContent ? 'has-content' : ''}`}
+                    style={{
+                        marginTop: '6px',
+                        cursor: hasBlockContent ? 'pointer' : 'default',
+                        opacity: hasBlockContent ? 1 : 0, // Fully invisible if no content
+                        pointerEvents: hasBlockContent ? 'auto' : 'none',
+                        width: '12px', // Fixed width to keep alignment
+                        flexShrink: 0,
+                        transform: expanded ? 'rotate(90deg)' : 'rotate(0deg)',
+                        transition: 'transform 0.15s ease'
+                    }}
+                    onClick={hasBlockContent ? handleToggleExpand : undefined}
+                >
+                    <svg viewBox="0 0 100 100" className="right-triangle" width="10" height="10" fill="var(--text-normal)">
+                        <path d="M 30,20 L 80,50 L 30,80 Z" />
+                    </svg>
+                </div>
+
+                {/* Removed Redundant Checkbox - The Keyword is the status indicator now */}
 
                 <span className="todo-content" style={{ flex: 1, overflow: 'hidden' }}>
                     <span
@@ -141,11 +170,11 @@ export const TaskItem: React.FC<TaskItemProps> = ({
                         dangerouslySetInnerHTML={{ __html: task.text }}
                     />
 
-                    {/* Meta Row: Dates (Below text, indented slightly or block) */}
-                    {((task.scheduledDate || task.deadlineDate) && !task.completed) && (
-                        <div className="todo-meta-row" style={{ marginTop: '4px', fontSize: '0.85em', color: 'var(--text-muted)' }}>
+                    {/* Meta Row: Dates - ALWAYS Visible if they exist */}
+                    {(task.scheduledDate || task.deadlineDate) && (
+                        <div className="todo-meta-row" style={{ marginTop: '4px', fontSize: '0.85em', color: 'var(--text-muted)', display: 'flex', gap: '12px' }}>
                             {task.scheduledDate && (
-                                <span className={`todo-date-item ${getDateClasses(task.scheduledDate, false).join(' ')}`} style={{ marginRight: '12px' }}>
+                                <span className={`todo-date-item ${getDateClasses(task.scheduledDate, false).join(' ')}`}>
                                     <span style={{ fontWeight: 600, color: scheduledColor }}>
                                         {task.scheduledSymbol || scheduledKeyword || 'SCHEDULED'}:
                                     </span>
@@ -159,6 +188,40 @@ export const TaskItem: React.FC<TaskItemProps> = ({
                                     </span>
                                     {' '}{formatDate(task.deadlineDate)}
                                 </span>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Expanded Block Content */}
+                    {expanded && hasBlockContent && (
+                        <div className="todo-block-content" style={{ marginTop: '8px', paddingLeft: '4px', borderLeft: '2px solid var(--background-modifier-border)' }}>
+                            {/* Notes/Block text */}
+                            <div className="todo-notes" style={{
+                                color: 'var(--text-muted)',
+                                fontSize: '0.9em',
+                                whiteSpace: 'pre-wrap',
+                                marginBottom: '8px'
+                            }}>
+                                {task.blockContent?.filter(line => !line.trim().startsWith('- [') && !line.trim().startsWith('* [') && !line.trim().startsWith('+ [')).join('\n')}
+                            </div>
+
+                            {/* Subtasks */}
+                            {task.subtasks && task.subtasks.length > 0 && (
+                                <ul className="todo-subtasks" style={{ listStyle: 'none', paddingLeft: '0', margin: '0' }}>
+                                    {task.subtasks.map((sub, idx) => (
+                                        <li key={idx} style={{
+                                            display: 'flex',
+                                            alignItems: 'baseline',
+                                            gap: '6px',
+                                            marginBottom: '4px',
+                                            textDecoration: sub.completed ? 'line-through' : 'none',
+                                            opacity: sub.completed ? 0.6 : 1
+                                        }}>
+                                            <input type="checkbox" checked={sub.completed} disabled style={{ marginTop: '2px' }} />
+                                            <span>{sub.text}</span>
+                                        </li>
+                                    ))}
+                                </ul>
                             )}
                         </div>
                     )}

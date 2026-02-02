@@ -4,7 +4,7 @@ import { Task, TaskViewMode } from '../task';
 import { DateUtils } from './date-utils';
 import { WorkflowService } from '../services/workflow-service';
 import { TaskStore } from '../services/task-store';
-import { SortMethod } from '../settings/defaults';
+import { SortMethod, GroupingMethod } from '../settings/defaults';
 
 // React Imports
 import * as React from 'react';
@@ -77,6 +77,13 @@ export class TodoView extends ItemView {
     return 'default';
   }
 
+  private getGroupingMethod(): GroupingMethod {
+    if (this.taskStore.getSettings().groupingMethod) {
+      return this.taskStore.getSettings().groupingMethod;
+    }
+    return 'none';
+  }
+
   async onOpen() {
     this.renderReactRoot();
 
@@ -127,9 +134,15 @@ export class TodoView extends ItemView {
       );
     }
 
-    // 3. View Mode & Sort Logic (Moved logic to simple sorts here or delegate to React? 
-    //    Ideally we reuse `transformForView` logic but modernized.
+    // 3. Advanced Filters
+    displayTasks = this.applyAdvancedFilters(displayTasks);
+
+    // 4. View Mode & Sort Logic
     displayTasks = this.transformForView(displayTasks, this.getViewMode());
+
+    // Extract available states and priorities for filters
+    const availableStates = Array.from(new Set(this.tasks.map(t => t.state)));
+    const availablePriorities = Array.from(new Set(this.tasks.map(t => t.priority).filter(p => p !== null))) as string[];
 
 
     this.root.render(
@@ -139,6 +152,10 @@ export class TodoView extends ItemView {
         searchQuery={this.searchQuery}
         viewMode={this.getViewMode()}
         sortMethod={this.getSortMethod()}
+        groupingMethod={this.getGroupingMethod()}
+        advancedFilters={this.taskStore.getSettings().advancedFilters}
+        availableStates={availableStates}
+        availablePriorities={availablePriorities}
         filterActive={this.filterActive}
 
         // Actions
@@ -150,6 +167,16 @@ export class TodoView extends ItemView {
         }}
         onSortMethodChange={async (m) => {
           this.taskStore.getSettings().sortMethod = m;
+          await this.saveSettings();
+          this.refreshVisibleList();
+        }}
+        onGroupingMethodChange={async (m) => {
+          this.taskStore.getSettings().groupingMethod = m;
+          await this.saveSettings();
+          this.refreshVisibleList();
+        }}
+        onAdvancedFiltersChange={async (f) => {
+          this.taskStore.getSettings().advancedFilters = f;
           await this.saveSettings();
           this.refreshVisibleList();
         }}
@@ -286,6 +313,55 @@ export class TodoView extends ItemView {
         return a.priority.localeCompare(b.priority);
       });
     }
+  }
+
+  private applyAdvancedFilters(tasks: Task[]): Task[] {
+    const filters = this.taskStore.getSettings().advancedFilters;
+    let filtered = tasks.slice();
+
+    // 1. Filter by State
+    if (filters.states && filters.states.length > 0) {
+      filtered = filtered.filter(t => filters.states.includes(t.state));
+    }
+
+    // 2. Filter by Priority
+    if (filters.priorities && filters.priorities.length > 0) {
+      filtered = filtered.filter(t => t.priority && filters.priorities.includes(t.priority));
+    }
+
+    // 3. Filter by Date
+    if (filters.dateMode !== 'all') {
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+      filtered = filtered.filter(t => {
+        // Consider both scheduled and deadline dates
+        const relevantDate = t.deadlineDate || t.scheduledDate;
+
+        if (filters.dateMode === 'noDate') {
+          return !t.deadlineDate && !t.scheduledDate;
+        }
+
+        if (!relevantDate) return false;
+
+        const targetDate = new Date(relevantDate.getFullYear(), relevantDate.getMonth(), relevantDate.getDate());
+        const diffMs = targetDate.getTime() - today.getTime();
+        const diffDays = Math.ceil(diffMs / (1000 * 3600 * 24));
+
+        switch (filters.dateMode) {
+          case 'overdue':
+            return diffDays < 0;
+          case 'today':
+            return diffDays === 0;
+          case 'thisWeek':
+            return diffDays >= 0 && diffDays <= 7;
+          default:
+            return true;
+        }
+      });
+    }
+
+    return filtered;
   }
 
   private getContrastColor(hex: string): string {

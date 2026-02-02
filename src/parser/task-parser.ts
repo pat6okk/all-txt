@@ -1,4 +1,4 @@
-import { Task, DEFAULT_COMPLETED_STATES, DEFAULT_PENDING_STATES, DEFAULT_ACTIVE_STATES } from '../task';
+import { Task, SubTask, DEFAULT_COMPLETED_STATES, DEFAULT_PENDING_STATES, DEFAULT_ACTIVE_STATES } from '../task';
 import { TodoTrackerSettings } from "../settings/defaults";
 import { LanguageRegistry, LanguageDefinition, LanguageCommentSupportSettings } from "./language-registry";
 import { DateParser } from "./date-parser";
@@ -321,10 +321,13 @@ export class TaskParser {
 
     // Helper to find matching keyword
     const findMatch = (keywords: string[]): string | undefined => {
-      // Look for KEYWORD: at start of content
+      // Look for KEYWORD: or KEYWORD (with or without colon) at start of content
       // Handle > prefix for quotes
       const content = line.startsWith('>') ? trimmedLine.substring(1).trim() : trimmedLine;
-      return keywords.find(k => content.startsWith(k + ':'));
+      return keywords.find(k => {
+        // Match "KEYWORD:" or "KEYWORD " (space after keyword)
+        return content.startsWith(k + ':') || content.startsWith(k + ' ');
+      });
     };
 
     // Check scheduled
@@ -346,8 +349,8 @@ export class TaskParser {
   parseDateFromLine(line: string, keyword: string): Date | null {
     // Escaped keyword
     const escaped = TaskParser.escapeKeywords([keyword]);
-    // Regex: ^[ >]* (KEYWORD): \s*
-    const prefixRegex = new RegExp(`^(\\s*>\\s*|\\s*)(${escaped}):\\s*`);
+    // Regex: ^[ >]* (KEYWORD):? \s*  (colon is now optional)
+    const prefixRegex = new RegExp(`^(\\s*>\\s*|\\s*)(${escaped}):?\\s*`);
     const content = line.replace(prefixRegex, '').trim();
     return DateParser.parseDate(content);
   }
@@ -524,7 +527,83 @@ export class TaskParser {
         tail: taskDetails.tail,
       };
 
-      // Extract dates from following lines
+      // US-1.2: Block Parsing Logic
+      // KEY RULE: Only capture block content if there is an EXPLICIT --- delimiter
+      const blockContent: string[] = [];
+      const subtasks: SubTask[] = [];
+      let blockEndLine = index;
+
+      // First, scan ahead to see if there IS a --- delimiter
+      let delimiterFound = false;
+      let delimiterLine = -1;
+
+      for (let scan = index + 1; scan < lines.length; scan++) {
+        const scanLine = lines[scan].trim();
+
+        // Stop scanning if we hit another keyword at same/lesser indentation
+        if (this.testRegex.test(lines[scan])) {
+          const scanMatch = this.captureRegex.exec(lines[scan]);
+          if (scanMatch) {
+            const scanIndent = scanMatch[1] || "";
+            if (scanIndent.length <= taskDetails.indent.length) {
+              break; // Next task found, stop scanning
+            }
+          }
+        }
+
+        // Check for delimiter
+        if (scanLine === '---') {
+          delimiterFound = true;
+          delimiterLine = scan;
+          break;
+        }
+      }
+
+      // ONLY capture block content if we found a --- delimiter
+      if (delimiterFound && delimiterLine > index) {
+        for (let j = index + 1; j < delimiterLine; j++) {
+          const nextLine = lines[j];
+          const nextLineTrimmed = nextLine.trim();
+
+          // Skip completely empty lines
+          if (nextLineTrimmed === '') {
+            blockContent.push(nextLine);
+            continue;
+          }
+
+          // Check if this line is a date metadata line (SCHEDULED, DEADLINE, etc.)
+          // These should NOT be part of blockContent; they'll be parsed by extractTaskDates
+          const dateInfo = this.getDateLineInfo(nextLine, taskDetails.indent);
+          if (dateInfo) {
+            // This is a date line, skip it from blockContent
+            continue;
+          }
+
+          // Line is part of the block content
+          blockContent.push(nextLine);
+          blockEndLine = j;
+
+          // Detect subtasks within the block
+          const subtaskMatch = nextLine.match(/^(\s*)[-*+]\s\[([ xX])\]\s+(.+)$/);
+          if (subtaskMatch) {
+            subtasks.push({
+              indent: subtaskMatch[1],
+              text: subtaskMatch[3],
+              completed: subtaskMatch[2].toLowerCase() === 'x',
+              line: j
+            });
+          }
+        }
+
+        // Set blockEndLine to the delimiter line
+        blockEndLine = delimiterLine;
+      }
+
+      task.blockContent = blockContent;
+      task.subtasks = subtasks;
+      task.blockEndLine = blockEndLine;
+
+      // Extract dates from following lines (metadata)
       const { scheduledDate, deadlineDate, scheduledSymbol, deadlineSymbol } = this.extractTaskDates(
         lines,
         index + 1,

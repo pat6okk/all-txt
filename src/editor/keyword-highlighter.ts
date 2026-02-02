@@ -1,12 +1,8 @@
 import { Extension } from "@codemirror/state";
-import { Decoration, DecorationSet, EditorView, ViewPlugin, ViewUpdate, MatchDecorator } from "@codemirror/view";
+import { Decoration, DecorationSet, EditorView, ViewPlugin, ViewUpdate } from "@codemirror/view";
 import { TodoTrackerSettings } from "../settings/defaults";
 
 export function keywordHighlighter(getSettings: () => TodoTrackerSettings): Extension {
-    // We build the decorator based on current settings.
-    // Note: If settings change (keywords/colors), this extension would ideally need to be reconfigured.
-    // For now, we assume this is initialized on load.
-
     const settings = getSettings();
     const keywordMap = new Map<string, string>();
 
@@ -32,9 +28,7 @@ export function keywordHighlighter(getSettings: () => TodoTrackerSettings): Exte
 
     if (keywordMap.size === 0) return [];
 
-    // 3. Build Regex
-    // US-1.1: Strict matching - only at start of line (with optional indentation)
-    // This now matches exactly what the parser detects, eliminating false positives
+    // 3. Build Regex for keyword matching (without capturing whitespace)
     const escapedKeywords = Array.from(keywordMap.keys())
         .filter(k => k && k.length > 0)
         .map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
@@ -42,9 +36,8 @@ export function keywordHighlighter(getSettings: () => TodoTrackerSettings): Exte
 
     if (!escapedKeywords) return [];
 
-    // Format: ^(\s*)(KEYWORD)\b
-    // This ensures we only highlight keywords at the start of a line
-    const regexp = new RegExp(`^(\\s*)(${escapedKeywords})\\b`, 'gm');
+    // Regex to match keywords at start of line (after whitespace)
+    const keywordRegex = new RegExp(`\\b(${escapedKeywords})\\b`, 'i');
 
     // 4. Helper for contrast color
     const getContrastColor = (hexcolor: string): string => {
@@ -60,44 +53,78 @@ export function keywordHighlighter(getSettings: () => TodoTrackerSettings): Exte
         }
     };
 
-    // 5. Use MatchDecorator (Robust standard CM6 pattern)
-    try {
-        const decorator = new MatchDecorator({
-            regexp,
-            decoration: (match) => {
-                // US-1.1: match[1] is whitespace, match[2] is the keyword
-                const keyword = match[2].toUpperCase();
-                const color = keywordMap.get(keyword) || '#888888';
-                const contrast = getContrastColor(color);
+    // 5. ViewPlugin that decorates keywords
+    return ViewPlugin.fromClass(class {
+        decorations: DecorationSet;
 
-                return Decoration.mark({
-                    attributes: {
-                        style: `
-                            background-color: ${color}; 
-                            color: ${contrast}; 
-                            border-radius: 4px; 
-                            padding: 0 4px; 
-                            font-weight: bold; 
-                            font-size: 0.85em;
-                        `
+        constructor(view: EditorView) {
+            this.decorations = this.buildDecorations(view);
+        }
+
+        update(update: ViewUpdate) {
+            if (update.docChanged || update.viewportChanged) {
+                this.decorations = this.buildDecorations(update.view);
+            }
+        }
+
+        buildDecorations(view: EditorView): DecorationSet {
+            const decorations: any[] = [];
+
+            for (let { from, to } of view.visibleRanges) {
+                const doc = view.state.doc;
+                let pos = from;
+
+                while (pos <= to) {
+                    const line = doc.lineAt(pos);
+                    const lineText = line.text;
+
+                    // Skip if line doesn't start with whitespace + keyword pattern
+                    const trimmedStart = lineText.match(/^(\s*)/);
+                    if (!trimmedStart) {
+                        pos = line.to + 1;
+                        continue;
                     }
-                });
-            }
-        });
 
-        return ViewPlugin.fromClass(class {
-            decorations: DecorationSet;
-            constructor(view: EditorView) {
-                this.decorations = decorator.createDeco(view);
+                    const indent = trimmedStart[1].length;
+                    const afterIndent = lineText.substring(indent);
+
+                    // Check if line starts with a keyword (after indentation)
+                    const match = afterIndent.match(keywordRegex);
+
+                    if (match && match.index === 0) {
+                        const keyword = match[1].toUpperCase();
+                        const color = keywordMap.get(keyword);
+
+                        if (color) {
+                            const contrast = getContrastColor(color);
+                            const keywordStart = line.from + indent;
+                            const keywordEnd = keywordStart + match[1].length;
+
+                            decorations.push(
+                                Decoration.mark({
+                                    class: 'cm-todo-keyword',
+                                    attributes: {
+                                        style: `
+                                            background-color: ${color}; 
+                                            color: ${contrast}; 
+                                            border-radius: 3px; 
+                                            padding: 0 4px; 
+                                            font-weight: bold; 
+                                            font-size: 0.85em;
+                                        `
+                                    }
+                                }).range(keywordStart, keywordEnd)
+                            );
+                        }
+                    }
+
+                    pos = line.to + 1;
+                }
             }
-            update(update: ViewUpdate) {
-                this.decorations = decorator.updateDeco(update, this.decorations);
-            }
-        }, {
-            decorations: v => v.decorations
-        });
-    } catch (e) {
-        console.error("TODO inline: Error initializing keyword highlighter", e);
-        return [];
-    }
+
+            return Decoration.set(decorations, true);
+        }
+    }, {
+        decorations: v => v.decorations
+    });
 }

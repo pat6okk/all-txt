@@ -1,0 +1,490 @@
+# Plan de Implementación: Épica 1 - Strict Headers & Block Content
+
+**Fecha de creación:** 2026-02-02  
+**Sprint Target:** v1.1 - Semanas 1-3  
+**Owner:** Backend + Frontend Team
+
+---
+
+## Resumen Ejecutivo
+
+Este documento describe la ruta técnica para implementar el cambio de paradigma de Épica 1:
+- **US-1.1:** Detección estricta (solo inicio de línea, sin prefijos)
+- **US-1.2:** Captura de bloques delimitados (`---`)
+- **US-1.5:** Menú contextual de conversión rápida
+
+**Impacto:** Re-arquitectura del parser y modelo de datos. Simplificación de regex. Nueva capacidad de "Rich Content" por tarea.
+
+---
+
+## Fase 1: Strict Parser (US-1.1)
+
+### Objetivo
+Modificar `task-parser.ts` para detectar keywords SOLO al inicio de línea (o con indentación), eliminando soporte para listas, viñetas y checkboxes.
+
+### Cambios Técnicos
+
+#### 1.1. Actualizar Regex Principal
+**Archivo:** `src/parser/task-parser.ts`
+
+**Antes:**
+```typescript
+const LINE_PATTERN = `^(\\s*)(${BULLET_LIST_PATTERN}|${NUMBERED_LIST_PATTERN}|...)?\\s*(${keywords})(.*)`;
+```
+
+**Después:**
+```typescript
+const LINE_PATTERN = `^(\\s*)(${keywords})\\s+(.*)`;
+```
+
+**Explicación:**
+- `^` - Inicio de línea
+- `(\\s*)` - Captura espacios de indentación (Grupo 1)
+- `(${keywords})` - Keyword (Grupo 2)
+- `\\s+` - Espacio obligatorio después de keyword
+- `(.*)` - Resto de la línea (Grupo 3)
+
+**Validaciones a remover:**
+- `BULLET_LIST_PATTERN`
+- `NUMBERED_LIST_PATTERN`
+- `BLOCKQUOTE_PATTERN`
+- `CHECKBOX_PATTERN`
+
+#### 1.2. Actualizar Highlighter
+**Archivo:** `src/editor/keyword-highlighter.ts`
+
+Simplificar regex del ViewPlugin para que coincida exactamente con el parser:
+```typescript
+const highlightRegex = new RegExp(`^(\\s*)(${keywordList.join('|')})\\s+`, 'gm');
+```
+
+#### 1.3. Testing
+**Archivo:** `tests/parser/strict-header.test.ts` (nuevo)
+
+Casos de prueba:
+```typescript
+describe('Strict Header Detection', () => {
+  it('detecta TODO al inicio de línea', () => {
+    const line = 'TODO Tarea principal';
+    // Debe detectar
+  });
+
+  it('detecta TODO con indentación', () => {
+    const line = '  DOING Subtarea';
+    // Debe detectar
+  });
+
+  it('NO detecta TODO después de viñeta', () => {
+    const line = '- TODO Tarea en lista';
+    // NO debe detectar
+  });
+
+  it('NO detecta TODO en medio de frase', () => {
+    const line = 'Revisar el TODO de ayer';
+    // NO debe detectar
+  });
+});
+```
+
+### Estimación: 6-8 horas
+- Modificación regex: 2h
+- Highlighter: 2h
+- Tests: 2-3h
+- QA manual: 1-2h
+
+---
+
+## Fase 2: Block Content Parser (US-1.2)
+
+### Objetivo
+Implementar lógica para capturar contenido multilinea desde un Header hasta `---` o siguiente keyword válida.
+
+### Cambios Técnicos
+
+#### 2.1. Actualizar Modelo de Datos
+**Archivo:** `src/task.ts`
+
+Añadir campos para almacenar contenido de bloque:
+
+```typescript
+interface Task {
+  // Campos existentes
+  file: string;
+  line: number;
+  keyword: string;
+  text: string;
+  priority?: string;
+  dueDate?: Date;
+  
+  // NUEVOS campos
+  blockContent?: string[];        // Líneas del bloque (excluyendo header)
+  subtasks?: SubTask[];          // Parsed checkboxes
+  blockEndLine?: number;         // Línea donde termina el bloque
+}
+
+interface SubTask {
+  text: string;
+  checked: boolean;
+  line: number;
+}
+```
+
+#### 2.2. Implementar Block Scanner
+**Archivo:** `src/parser/task-parser.ts`
+
+Nueva función `parseBlock()`:
+
+```typescript
+/**
+ * Escanea líneas consecutivas hasta encontrar delimitador o límite
+ */
+function parseBlock(
+  lines: string[], 
+  startLine: number, 
+  headerIndent: number
+): BlockResult {
+  const blockContent: string[] = [];
+  const subtasks: SubTask[] = [];
+  let currentLine = startLine + 1;
+  
+  while (currentLine < lines.length) {
+    const line = lines[currentLine];
+    
+    // Condiciones de terminación
+    if (line.trim() === '---') {
+      return { blockContent, subtasks, endLine: currentLine };
+    }
+    
+    // Si encontramos otra keyword al mismo nivel -> terminar
+    if (isValidHeader(line, headerIndent)) {
+      return { blockContent, subtasks, endLine: currentLine - 1 };
+    }
+    
+    // Si es checkbox, parsear como subtask
+    if (isCheckbox(line)) {
+      subtasks.push(parseCheckbox(line, currentLine));
+    }
+    
+    // Añadir al contenido del bloque
+    blockContent.push(line);
+    currentLine++;
+  }
+  
+  // Llegamos al final del archivo
+  return { blockContent, subtasks, endLine: currentLine - 1 };
+}
+```
+
+#### 2.3. Actualizar `parseFile()`
+Modificar el loop principal para invocar `parseBlock()` cuando detectamos un Header:
+
+```typescript
+for (let i = 0; i < lines.length; i++) {
+  const line = lines[i];
+  
+  // Detectar header (US-1.1)
+  const headerMatch = line.match(STRICT_HEADER_REGEX);
+  if (headerMatch) {
+    const indent = headerMatch[1].length;
+    const keyword = headerMatch[2];
+    const text = headerMatch[3];
+    
+    // Parsear bloque (US-1.2)
+    const block = parseBlock(lines, i, indent);
+    
+    // Crear tarea completa
+    const task: Task = {
+      file: currentFile,
+      line: i,
+      keyword,
+      text,
+      blockContent: block.blockContent,
+      subtasks: block.subtasks,
+      blockEndLine: block.endLine,
+      // ... parsear metadata del bloque
+    };
+    
+    tasks.push(task);
+    
+    // Saltar líneas procesadas
+    i = block.endLine;
+  }
+}
+```
+
+#### 2.4. Testing
+**Archivo:** `tests/parser/block-content.test.ts` (nuevo)
+
+```typescript
+describe('Block Content Parsing', () => {
+  it('captura bloque hasta ---', () => {
+    const input = `
+TODO Tarea principal
+ - [ ] Subtarea 1
+ - [ ] Subtarea 2
+Nota importante
+---
+`;
+    const tasks = parseFile(input);
+    expect(tasks[0].subtasks).toHaveLength(2);
+    expect(tasks[0].blockContent).toContain('Nota importante');
+  });
+
+  it('bloque termina al encontrar siguiente keyword', () => {
+    const input = `
+TODO Tarea 1
+Contenido de tarea 1
+TODO Tarea 2
+`;
+    const tasks = parseFile(input);
+    expect(tasks).toHaveLength(2);
+    expect(tasks[0].blockEndLine).toBe(2);
+  });
+});
+```
+
+### Estimación: 10-12 horas
+- Modelo Task: 2h
+- Block scanner: 4-5h
+- Integración parseFile(): 2h
+- Tests: 3-4h
+- QA: 1-2h
+
+---
+
+## Fase 3: Visualización de Bloques (US-1.2 Frontend)
+
+### Objetivo
+Renderizar contenido de bloque en el panel lateral con subtareas expandibles.
+
+### Cambios Técnicos
+
+#### 3.1. Actualizar `TaskItem.tsx`
+**Archivo:** `src/ui/view/TaskItem.tsx`
+
+Añadir sección colapsable para contenido:
+
+```tsx
+interface TaskItemProps {
+  task: Task;
+  onToggle: (task: Task) => void;
+  onNavigate: (task: Task) => void;
+}
+
+export const TaskItem: React.FC<TaskItemProps> = ({ task, onToggle, onNavigate }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  
+  return (
+    <div className="task-item">
+      <div className="task-header" onClick={() => onNavigate(task)}>
+        <span className={`keyword ${task.keyword}`} onClick={(e) => {
+          e.stopPropagation();
+          onToggle(task);
+        }}>
+          {task.keyword}
+        </span>
+        <span className="task-text">{task.text}</span>
+        {task.blockContent && (
+          <button 
+            className="expand-toggle"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsExpanded(!isExpanded);
+            }}
+          >
+            {isExpanded ? '▼' : '▶'}
+          </button>
+        )}
+      </div>
+      
+      {isExpanded && task.blockContent && (
+        <div className="block-content">
+          {task.subtasks && task.subtasks.length > 0 && (
+            <ul className="subtasks">
+              {task.subtasks.map((subtask, idx) => (
+                <li key={idx} className={subtask.checked ? 'checked' : ''}>
+                  {subtask.text}
+                </li>
+              ))}
+            </ul>
+          )}
+          <div className="block-text">
+            {task.blockContent.map((line, idx) => (
+              <p key={idx}>{line}</p>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+```
+
+#### 3.2. CSS
+**Archivo:** `styles.css`
+
+```css
+.block-content {
+  margin-left: 20px;
+  padding: 8px;
+  background: var(--background-secondary);
+  border-left: 2px solid var(--text-faint);
+}
+
+.subtasks {
+  list-style: none;
+  margin: 4px 0;
+}
+
+.subtasks li {
+  padding: 2px 0;
+}
+
+.subtasks li.checked {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+
+.expand-toggle {
+  margin-left: auto;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+```
+
+### Estimación: 4-6 horas
+- Componente TaskItem: 2-3h
+- CSS: 1h
+- Testing manual: 1-2h
+
+---
+
+## Fase 4: Context Menu (US-1.5)
+
+### Objetivo
+Añadir comando al menú contextual del editor para convertir selección en bloque FLOW.
+
+### Cambios Técnicos
+
+#### 4.1. Registrar Editor Menu
+**Archivo:** `src/main.ts`
+
+```typescript
+export default class FlowPlugin extends Plugin {
+  async onload() {
+    // ... código existente
+    
+    // Registrar menú contextual
+    this.registerEvent(
+      this.app.workspace.on('editor-menu', (menu, editor, view) => {
+        this.addConversionMenu(menu, editor, view);
+      })
+    );
+  }
+  
+  private addConversionMenu(menu: Menu, editor: Editor, view: MarkdownView) {
+    const selection = editor.getSelection();
+    
+    if (!selection && !editor.getCursor()) return;
+    
+    // Menú principal
+    menu.addItem((item) => {
+      const submenu = item
+        .setTitle('FLOW: Convert to...')
+        .setIcon('flow-icon');
+      
+      // Submenú dinámico con keywords
+      const startKeywords = this.settings.todoKeywords;
+      startKeywords.forEach(keyword => {
+        submenu.addSubmenuItem((subItem) => {
+          subItem
+            .setTitle(keyword)
+            .onClick(() => {
+              this.convertToFlowBlock(editor, keyword, selection);
+            });
+        });
+      });
+    });
+  }
+  
+  private convertToFlowBlock(editor: Editor, keyword: string, selection?: string) {
+    if (selection) {
+      const lines = selection.split('\n');
+      const firstLine = lines[0];
+      const rest = lines.slice(1).join('\n');
+      
+      const converted = `${keyword} ${firstLine}\n${rest}\n---`;
+      editor.replaceSelection(converted);
+    } else {
+      // Insertar plantilla vacía
+      editor.replaceSelection(`${keyword} \n---`);
+      // Mover cursor entre keyword y delimitador
+      const cursor = editor.getCursor();
+      editor.setCursor({ line: cursor.line, ch: keyword.length + 1 });
+    }
+  }
+}
+```
+
+#### 4.2. Testing
+**Casos manuales:**
+1. Seleccionar texto multilínea → Click derecho → Elegir TODO → Verificar formato
+2. Sin selección → Click derecho → Elegir ASK → Verificar plantilla vacía
+3. Selección con listas internas → Verificar que se mantiene formato
+
+### Estimación: 5-7 horas
+- Implementación menú: 3h
+- Lógica conversión: 2h
+- Testing: 2h
+
+---
+
+## Riesgos y Mitigaciones
+
+| Riesgo | Probabilidad | Impacto | Mitigación |
+|--------|--------------|---------|------------|
+| Regex simplificado rompe casos existentes | Alta | Alto | Testing exhaustivo de regresión |
+| Performance con bloques grandes | Media | Medio | Implementar límite de 100 líneas por bloque |
+| Usuarios pierden compatibilidad con notas viejas | Alta | Alto | Proveer US-1.5 (conversión) como solución rápida |
+| Complejidad de UI con bloques anidados | Media | Medio | Limitar depth visual a 2 niveles |
+
+---
+
+## Checklist de Entrega
+
+### US-1.1 (Strict Parser)
+- [ ] Regex actualizado en `task-parser.ts`
+- [ ] Highlighter sincronizado
+- [ ] Tests de regresión pasan
+- [ ] Documentación actualizada
+
+### US-1.2 (Block Content)
+- [ ] Modelo `Task` extendido
+- [ ] `parseBlock()` implementado
+- [ ] Metadata se parsea dentro de bloques
+- [ ] UI renderiza bloques expandibles
+- [ ] Tests de bloques complejos
+
+### US-1.5 (Context Menu)
+- [ ] Menú contextual funcional
+- [ ] Conversión de selección correcta
+- [ ] Plantilla vacía funcional
+- [ ] Submenú dinámico con settings
+
+### General
+- [ ] Cobertura de tests > 70%
+- [ ] Performance validada (archivos 5000+ líneas)
+- [ ] ARCHITECTURE.md actualizado
+- [ ] CHANGELOG.md documentado
+
+---
+
+## Próximos Pasos
+
+1. **Semana 1:** Implementar US-1.1 (Strict Parser)
+2. **Semana 2:** Implementar US-1.2 Backend (Block Scanner)
+3. **Semana 2-3:** US-1.2 Frontend (Visualización) + US-1.5 (Context Menu)
+4. **Semana 3:** Testing completo y refinamiento
+
+**Fecha estimada de finalización:** Fin de Semana 3 (21 días)

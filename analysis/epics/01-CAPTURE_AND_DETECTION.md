@@ -7,67 +7,67 @@
 
 ---
 
-## US-1.1: Escribir estados en texto plano
+## US-1.1: Strict Header (Detección Estricta)
 
 **Componentes:** [ENGINE] [EDITOR]  
-**Estado:** 🟢 Implementado
+**Estado:** � **En Implementación**
 
 **Historia:**
-Como escritor de notas, quiero usar palabras clave simples (TODO, ASK, DOING) directamente en mis notas Markdown, para capturar estados sin romper mi flujo de escritura ni aprender sintaxis especial.
+Como usuario, quiero definir mis estados (TODO, DOING) como encabezados claros en mi documento, eliminando la ambigüedad de si una palabra es parte de una frase o un estado real.
 
 **Criterios de Aceptación:**
-- ✅ Puedo escribir `TODO Revisar propuesta` en cualquier parte de mi nota
-- ✅ El plugin detecta la keyword independientemente del contexto (párrafos, listas, citas)
-- ✅ La nota sigue siendo 100% portable (legible en otros editores)
-- ✅ Keywords pueden estar al inicio de línea o después de prefijos (viñetas, números, etc.)
+- ✅ **Posición Estricta:** La keyword (`TODO`) debe estar al **inicio absoluto** de la línea o precedida únicamente por espacios (indentación).
+- ✅ **Sin Prefijos:** NO se detectará la keyword si está precedida por viñetas (`-`, `*`), números (`1.`) o checkboxes (`- [ ]`).
+    - *Válido:* `TODO Tarea principal`
+    - *Válido:* `  DOING Subtarea indentada`
+    - *Inválido:* `- TODO Tarea en lista` (Se ignora, es texto plano)
+- ✅ El parser ignora keywords a mitad de frase.
 
-**Implementación actual:**
-- ✅ Parser detecta keywords con regex flexible
-- ✅ Soporta prefijos estándar, citas y callouts
-- ✅ No requiere sintaxis especial, solo texto plano
+**Justificación:**
+Este cambio simplifica radicalmente el parser, elimina falsos positivos visuales y fuerza una estructura donde el Estado tiene jerarquía visual de "Título" o "Bloque".
+
+**Implementación técnica:**
+- Regex simplificado: `^(\s*)(${keywords})(.*)`
+- Eliminar lógica de `BULLET_LIST_PATTERN`, etc.
 
 **Archivos relacionados:**
-- [src/parser/task-parser.ts](../../src/parser/task-parser.ts) (Regex de detección)
-- [src/task.ts](../../src/task.ts) (Modelo de datos)
+- [src/parser/task-parser.ts](../../src/parser/task-parser.ts)
 
 ---
 
-## US-1.2: Detección en múltiples contextos
+## US-1.2: Captura de Bloque y Contenido Rico
 
-**Componentes:** [ENGINE]  
-**Estado:** ⚠️ **En revisión**
+**Componentes:** [ENGINE] [VIEW]  
+**Estado:** ⚠️ **Pendiente de diseño**
 
 **Historia:**
-Como usuario avanzado de Markdown, quiero que las keywords funcionen dentro de listas, callouts, citas y tareas de checkbox, para no tener que adaptar mi estilo de escritura existente.
+Como usuario, quiero poder añadir contexto, subtareas y detalles a un estado principal, y que el plugin capture todo ese bloque como una sola unidad ("Tarjeta") hasta encontrar un delimitador.
 
 **Criterios de Aceptación:**
-- ✅ Detección en listas con viñetas (`-`, `*`, `+`)
-- ✅ Detección en listas numeradas y alfabéticas (`1.`, `a)`)
-- ✅ Detección en listas personalizadas (`(A1)`, `(B2)`)
-- ✅ Detección en blockquotes (`>`)
-- ✅ Detección en callouts de Obsidian (`> [!tip]`)
-- ✅ Detección en checkboxes nativos (`- [ ] TODO tarea`)
-- ✅ Detección en bloques de código con comentarios (si está habilitado)
+- ✅ **Modo Bloque:** El parser captura todo el contenido debajo de un Header (US-1.1) hasta encontrar un separador horizontal `---` (tres guiones) o el final del archivo.
+- ✅ **Contenido Soportado:** Dentro del bloque se debe capturar y asociar a la tarea padre:
+    - Listas de verificación (`[ ]` o `- [ ]`) como subtareas.
+    - Texto plano como descripción/contexto.
+    - Metadatos (ej: `DUE: 2025-10-10`) en cualquier línea del bloque.
+- ✅ **Visualización:** En el panel del plugin, este bloque se renderiza unificado (el texto y subtareas pertenecen al TODO principal).
 
-**Posicionamiento de keywords:**
-- La keyword debe estar **inmediatamente después** de cualquier prefijo (lista, checkbox, cita)
-- Formato correcto: `- TODO tarea` o `> TODO pregunta` o `1. TODO item`
-- **No** se detecta en la lista de tareas del panel: ❌ `- Revisar el TODO de ayer` (TODO no se detecta porque no está al inicio)
-- **Sí** se detecta en lista de tareas: ✅ `- TODO Revisar de ayer` (TODO está justo después del `-`)
+**Ejemplo de Bloque Válido:**
+```markdown
+TODO Refactorizar Backend
+ - [ ] Tarea hija 1
+ - [ ] Tarea hija 2
+Nota: Aquí explicamos el contexto complejo.
+DUE: 2023-12-01
+---
+```
 
-**⚠️ Problema actual identificado:**
-Si escribes `- Revisar TODO de ayer y DONE`, el highlighter del editor resalta TODO y DONE (por diseño del regex), pero **NO** se agregan a la lista del panel (comportamiento correcto del parser). Esto puede causar confusión visual.
+**Manejo de conflictos:**
+- Si no hay `---`, el bloque termina implícitamente al encontrar la siguiente Keyword de estado válido (igual nivel de indentación) o fin de archivo.
+- La prioridad explícita del delimitador `---` es cerrar el contexto actual inmediatamente.
 
-**Solución propuesta:** Mejorar el regex del highlighter para que solo resalte keywords en posición válida, o documentar claramente esta limitación.
-
-**Implementación actual:**
-- ✅ Regex captura prefijos opcionales
-- ✅ Variables `BULLET_LIST_PATTERN`, `NUMBERED_LIST_PATTERN`, etc.
-- ✅ Soporte configurable para callouts y código
-
-**Archivos relacionados:**
-- [src/parser/task-parser.ts](../../src/parser/task-parser.ts) (Patrones de detección)
-- [src/settings/defaults.ts](../../src/settings/defaults.ts) (Opciones `includeCalloutBlocks`, `includeCodeBlocks`)
+**Implementación técnica:**
+- Parser necesita lógica de "Lookahead" o "Accumulation" (multiline scanning).
+- Modelo de datos (`Task`) debe incluir campo `body` o `children`.
 
 ---
 
@@ -126,18 +126,38 @@ Como usuario con necesidades específicas, quiero definir keywords personalizado
 
 ---
 
+## US-1.5: Conversión rápida desde menú contextual
+
+**Componentes:** [EDITOR] [CONFIG]  
+**Estado:** 🔴 **Pendiente**
+
+**Historia:**
+Como usuario, quiero transformar rápidamente bloques de texto existentes o notas rápidas en "Tareas FLOW" estructuradas usando el clic derecho, para no tener que escribir manualmente la sintaxis de bloque.
+
+**Criterios de Aceptación:**
+- ✅ Al seleccionar texto en el editor y hacer click derecho, aparece el menú `FLOW: Convert to...`.
+- ✅ Se muestra un submenú con las Keywords configuradas (ej: TODO, ASK, IDEA).
+- ✅ Al seleccionar una opción:
+    - Se inserta la Keyword seleccionada al inicio de la primera línea (respetando indentación existente).
+    - Se añade el delimitador `---` en una nueva línea al final de la selección.
+- ✅ Si no hay texto seleccionado, se inserta una plantilla vacía (`TODO \n ---`) en la posición del cursor.
+- ✅ Mantiene el formato interno del bloque (listas, notas) sin cambios destructivos.
+
+---
+
 ## Resumen de Épica 1
 
 | US | Descripción | Estado |
 |----|-------------|--------|
-| US-1.1 | Texto plano sin sintaxis | 🟢 |
-| US-1.2 | Múltiples contextos | ⚠️ |
+| US-1.1 | Strict Header (Detección Estricta) | � |
+| US-1.2 | Captura de Bloque (Delimited) | ⚠️ |
 | US-1.3 | Exclusión técnica inteligente | 🟢 |
 | US-1.4 | Vocabulario personalizado | 🟢 |
+| US-1.5 | Conversión Menú Contextual | 🔴 |
 
 **Cobertura de componentes:**
-- **[ENGINE]** - 4/4 implementadas
-- **[CONFIG]** - 2/4 implementadas
-- **[EDITOR]** - 2/4 implementadas
+- **[ENGINE]** - 4/5 requeridas
+- **[CONFIG]** - 3/5 requeridas
+- **[EDITOR]** - 3/5 requeridas
 
 **Acción requerida:** Resolver problema de detección en US-1.2 (highlighter vs. parser)

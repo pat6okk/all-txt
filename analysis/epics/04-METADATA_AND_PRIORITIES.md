@@ -47,18 +47,19 @@ DEADLINE: 2025-12-31
   - Separadores flexibles: `/` o `-`
   - Tiempo opcional: HH:mm
   - Lenguaje natural con `chrono-node`: "tomorrow", "next Friday"
-- ✅ **DatePickerModal**: Calendario inline con Flatpickr
-  - Context menu en badges de fecha (click derecho)
+- ✅ **DatePickerModal**: Modal con HTML5 Native Input (`<input type="date">`)
+  - Solución simple, robusta y nativa del sistema
   - Shortcuts: Today / Tomorrow / Next Week / Clear
+  - Context menu en badges de fecha (click derecho)
   - Actualización automática de archivos Markdown
 - ✅ **Settings**: Campo `dateFormat` configurable (default: DD/MM/YYYY)
 - ✅ **Context menus**: Click derecho en badges del panel abre DatePicker
 
 **Mejoras propuestas (Pendientes):**
-- ⚠️ **CRÍTICO**: Mejorar UI del DatePicker (Flatpickr inline muestra días en una sola línea - poco usable)
-  - Considerar alternativa: Modal con HTML5 `<input type="date">` o calendario custom
-  - O ajustar estilos de Flatpickr para layout correcto
 - ⏳ Context menu en editor (click derecho en líneas de fecha)
+- ⏳ Validación estricta: mostrar error visual si formato inválido
+- ⏳ Soporte para rangos de fechas
+- ⏳ Notificaciones configurables (alertar N días antes de deadline)
 - ⏳ Validación estricta: mostrar error visual si formato inválido
 - ⏳ Soporte para rangos de fechas
 - ⏳ Notificaciones configurables (alertar N días antes de deadline)

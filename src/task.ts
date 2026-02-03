@@ -12,11 +12,12 @@ export interface Task {
   rawText: string; // original full line
   indent: string;  // leading whitespace before any list marker/state
   listMarker: string; // the exact list marker plus trailing space if present (e.g., "- ", "1. ", "(a) ")
-  text: string;    // content after the state keyword with priority token removed
+  text: string;    // content after the state keyword with priority/labels removed
   state: string;   // state keyword, TODO, DOING, DONE etc.
   completed: boolean; // is the task considered complete
   priority: string | null;     // Raw priority token (e.g. "A", "P1") or null if none
   priorityLabel: string;       // The full token found in text (e.g. "[#A]") for display reconstruction
+  labels: string[];            // Array of label tokens (e.g. ["Trabajo", "Urgente"]) - Épica 5
   scheduledDate: Date | null; // scheduled date from SCHEDULED: line
   deadlineDate: Date | null;  // deadline date from DEADLINE: line
   // Phase 1: Original symbols

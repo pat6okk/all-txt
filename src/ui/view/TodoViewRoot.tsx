@@ -15,6 +15,7 @@ interface TodoViewRootProps {
     advancedFilters: AdvancedFilters;
     availableStates?: string[];
     availablePriorities?: string[];
+    availableLabels?: string[]; // Épica 5
     filterActive: boolean;
 
     // Actions
@@ -35,6 +36,8 @@ interface TodoViewRootProps {
     onPriorityContextMenu: (task: Task, e: React.MouseEvent) => void;
     // US-4.1: Date management
     onDateContextMenu: (task: Task, dateType: 'scheduled' | 'deadline', e: React.MouseEvent) => void;
+    // Épica 5: Label management
+    onLabelContextMenu: (task: Task, label: string, e: React.MouseEvent) => void;
 
     // Services / Utils
     getKeywordColor: (k: string) => string;
@@ -100,6 +103,7 @@ export const TodoViewRoot: React.FC<TodoViewRootProps> = (props) => {
                 onAdvancedFiltersChange={props.onAdvancedFiltersChange}
                 availableStates={props.availableStates}
                 availablePriorities={props.availablePriorities}
+                availableLabels={props.availableLabels}
                 filterActive={props.filterActive}
                 onFilterActiveChange={props.onFilterActiveChange}
                 taskCount={props.tasks.length}
@@ -133,6 +137,8 @@ export const TodoViewRoot: React.FC<TodoViewRootProps> = (props) => {
                                 onPriorityContextMenu={props.onPriorityContextMenu}
                                 getNextPriority={props.getNextPriority}
                                 onDateContextMenu={props.onDateContextMenu}
+                                onLabelContextMenu={props.onLabelContextMenu}
+                                availableLabels={props.availableLabels}
                             />
                         ))}
                     </div>
@@ -170,6 +176,8 @@ export const TodoViewRoot: React.FC<TodoViewRootProps> = (props) => {
                         onPriorityContextMenu={props.onPriorityContextMenu}
                         getNextPriority={props.getNextPriority}
                         onDateContextMenu={props.onDateContextMenu}
+                        onLabelContextMenu={props.onLabelContextMenu}
+                        availableLabels={props.availableLabels}
                     />
                 )}
             </div>
@@ -199,6 +207,8 @@ interface TaskGroupProps {
     onPriorityContextMenu: (task: Task, e: React.MouseEvent) => void;
     getNextPriority: (current: string | null) => string | null;
     onDateContextMenu: (task: Task, dateType: 'scheduled' | 'deadline', e: React.MouseEvent) => void;
+    onLabelContextMenu: (task: Task, label: string, e: React.MouseEvent) => void;
+    availableLabels?: string[];
 }
 
 const TaskGroup: React.FC<TaskGroupProps> = (props) => {
@@ -278,6 +288,8 @@ const TaskGroup: React.FC<TaskGroupProps> = (props) => {
                     onPriorityContextMenu={props.onPriorityContextMenu}
                     getNextPriority={props.getNextPriority}
                     onDateContextMenu={props.onDateContextMenu}
+                    onLabelContextMenu={props.onLabelContextMenu}
+                    availableLabels={props.availableLabels}
                 />
             )}
         </div>

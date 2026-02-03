@@ -4,33 +4,30 @@ Este documento consolida análisis de factibilidad y propuestas técnicas para f
 
 ## 1. Sistema de Etiquetas (Labels) Multi-dimensionales
 
+> **📋 Estado:** En planificación activa  
+> **📄 Especificación:** [Épica 5: Labels System](./epics/05-LABELS_SYSTEM.md)
+
 ### Contexto
-Actualmente, el plugin soporta "Prioridades" (`priority`), que es un campo único por tarea. Existe una necesidad de soportar múltiples etiquetas (ej: `#Trabajo`, `#Urgente`, `#EquipoA`) en una misma tarea sin conflicto.
+Sistema de clasificación complementario a las prioridades que permite múltiples etiquetas (`@Trabajo`, `@Urgente`, `@EquipoA`) por tarea para categorización, filtrado y agrupación.
 
-### Análisis Técnico
-- **Limitación Actual**: La interfaz `Task` define `priority` como `string | null` (valor único). El `TaskParser` detiene la búsqueda tras encontrar el primer token de prioridad y lo elimina del texto "limpio".
-- **Riesgo**: Reutilizar el campo `priority` para una lista rompería la lógica de ordenamiento y agrupación actual.
+### Decisión Clave
+**Separar completamente Prioridades de Labels:**
+- **Priority** (0-1): Valor único para ordenamiento → `P1`, `ALTA`
+- **Labels** (0-N): Múltiples etiquetas para categorización → `@contexto`, `@equipo`
 
-### Propuesta de Implementación
-Tratar "Labels" como una entidad completamente separada de "Prioridades".
+### Sintaxis Propuesta
+```markdown
+TODO P1 Preparar demo @Trabajo @EquipoAlpha
+TODO ALTA Revisar código @Backend @Dev
+```
 
-1. **Extensión de Modelo (`src/task.ts`)**:
-   ```typescript
-   export interface Task {
-       // ... campos existentes
-       priority: string | null; // Mantiene compatibilidad para ordenamiento principal
-       labels: string[];        // NUEVO: Array de etiquetas adicionales
-   }
-   ```
+### Plan de Implementación
+1. **Fase 1 - Core Engine**: Extender Task interface, implementar parsing
+2. **Fase 2 - UI Básica**: Renderizar badges, estilos
+3. **Fase 3 - Filtrado**: Filtros por labels en panel
+4. **Fase 4 - Settings**: Configuración de labels definidos
 
-2. **Parsing Aditivo**:
-   - El parser primero extrae la `priority` (si existe).
-   - Luego, escanea el texto restante buscando otros tokens definidos en `Settings`.
-   - Estos tokens se extraen al array `labels`.
-
-3. **UI**:
-   - Renderizar los labels como badges visuales adicionales en `TaskItem`.
-   - Permitir filtrado por labels en `TodoViewRoot`.
+Ver especificación completa en [Épica 5](./epics/05-LABELS_SYSTEM.md).
 
 ---
 

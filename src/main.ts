@@ -5,13 +5,15 @@ import { TodoTrackerSettingTab } from "./settings/settings";
 import { TodoTrackerSettings, DEFAULT_SETTINGS } from "./settings/defaults";
 import { keywordHighlighter } from './editor/keyword-highlighter';
 import { keywordContextMenu } from './editor/keyword-context-menu';
+import { priorityContextMenu } from './editor/priority-context-menu';
+import { labelContextMenu } from './editor/label-context-menu';
 import { dateContextMenu } from './editor/date-context-menu';
 import { WorkflowService } from './services/workflow-service';
 import { TaskEditor } from './view/task-editor';
 import { TaskStore } from './services/task-store';
 import { SettingsService } from './services/settings-service';
 
-export default class TodoInlinePlugin extends Plugin {
+export default class FlowTxtPlugin extends Plugin {
   settings: TodoTrackerSettings;
 
   // Services
@@ -52,10 +54,10 @@ export default class TodoInlinePlugin extends Plugin {
       // We might need to notify views to re-read settings if they obey them.
       this.refreshOpenTaskViews();
     };
-    window.addEventListener('todoinline:view-mode-change', handler);
-    this.register(() => window.removeEventListener('todoinline:view-mode-change', handler));
+    window.addEventListener('flowtxt:view-mode-change', handler);
+    this.register(() => window.removeEventListener('flowtxt:view-mode-change', handler));
 
-    this.addRibbonIcon(TASK_VIEW_ICON, 'Open TODO inline', () => {
+    this.addRibbonIcon(TASK_VIEW_ICON, 'Open FLOW-txt', () => {
       this.showTasks();
     });
 
@@ -67,6 +69,12 @@ export default class TodoInlinePlugin extends Plugin {
 
     // US-3.4: Register editor extension for keyword context menu
     this.registerEditorExtension(keywordContextMenu(this.workflowService, this.taskEditor));
+
+    // Register editor extension for priority context menu
+    this.registerEditorExtension(priorityContextMenu(this.settingsService));
+
+    // Épica 5: Register editor extension for label context menu
+    this.registerEditorExtension(labelContextMenu(this.settingsService));
 
     // US-4.1 Phase 2: Register editor extension for date context menu
     this.registerEditorExtension(dateContextMenu(this.app, this.settingsService));
@@ -160,8 +168,11 @@ export default class TodoInlinePlugin extends Plugin {
     const otherLines = lines.slice(1).join('\n');
     const fullText = otherLines ? `${cleanFirstLine}\n${otherLines}` : cleanFirstLine;
 
-    // 3. Construct the block: [INDENT][KEYWORD] [REST_OF_TEXT]
-    const newBlock = `${indent}${keyword} ${fullText.trimEnd()}\n\n---`;
+    // 3. Get active delimiter from settings
+    const activeDelimiter = this.settings.blockKeywords[0] || 'END-FLOW';
+
+    // 4. Construct the block: [INDENT][KEYWORD] [REST_OF_TEXT]\n\n[DELIMITER]
+    const newBlock = `${indent}${keyword} ${fullText.trimEnd()}\n\n${activeDelimiter}`;
 
     editor.replaceRange(newBlock, from, to);
   }

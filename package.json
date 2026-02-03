@@ -1,6 +1,6 @@
 {
   "name": "flow-txt",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Keyword-driven state tracking for plain Markdown. Evolved from TODO.txt.",
   "author": "6okk",
   "main": "main.js",

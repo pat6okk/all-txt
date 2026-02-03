@@ -82,25 +82,35 @@ DEADLINE: 2025-12-31
 ## US-4.2: Prioridades multi-cola
 
 **Componentes:** [ENGINE] [VIEW] [CONFIG]  
-**Estado:** ⚠️ **En revisión** 
+**Estado:** ✅ **DECISIÓN CERRADA** (2026-02-03)
 
-**NOTA IMPORTANTE:** Debemos analizar si esto da valor, ya que puede ser redundante tener dos o más sistemas de prioridad que actúen a la vez.
+> **Resolución:** Single-system de prioridad + Sistema de Labels separado.  
+> **Ver:** [Épica 5: Labels System](./05-LABELS_SYSTEM.md)
 
-**Ejemplos de ANTI-PATTERNS a evitar:**
+### Análisis Realizado
 
-❌ TODO P1 URGENTE cocinar huevos  (NO TIENE SENTIDO)
-❌ TODO P1 #A Tarea compleja   (Confuso, ¿cuál tiene precedencia?)
+**Problema identificado:** Confusión entre prioridades (ordenamiento) y categorización (filtrado).
 
-✅ TODO P1 Tarea crítica          (Un sistema de prioridad)
-✅ TODO URGENTE Tarea crítica     (Un sistema de prioridad)
+**Anti-patterns a evitar:**
+```markdown
+❌ TODO P1 URGENTE cocinar huevos  (Confuso: ¿qué tiene precedencia?)
+❌ TODO P1 #A Tarea compleja       (Mezcla sistemas incompatibles)
+```
 
+**Patrones correctos:**
+```markdown
+✅ TODO P1 Tarea crítica @Trabajo          (Prioridad + Label)
+✅ TODO URGENTE Revisar código @Backend    (Prioridad + Label)
+```
 
-**RECOMENDACIÓN:** Usar UN SOLO sistema de prioridad. Opciones:
-- Técnica: P1, P2, P3 (enfoque ágil)
-- Empresarial: ALTA, MEDIA, BAJA (enfoque ejecutivo)
-- Impacto: CRÍTICO, IMPORTANTE, NORMAL (enfoque por impacto)
+### Decisión Final
 
-**Decisión pendiente:** ¿Implementamos multi-cola o recomendamos single-system?
+| Sistema | Cantidad | Propósito | Sintaxis |
+|---------|----------|-----------|----------|
+| **Priority** | 0-1 por tarea | Ordenamiento/Urgencia | `P1`, `ALTA` (token) |
+| **Labels** | 0-N por tarea | Categorización/Filtrado | `@contexto` |
+
+**RECOMENDACIÓN:** Usar UN SOLO sistema de prioridad (P1/P2/P3 o ALTA/MEDIA/BAJA) + múltiples labels para categorización.
 
 **Historia original:**
 Como usuario con diferentes tipos de urgencia (impacto vs. esfuerzo), quiero usar múltiples sistemas de prioridad simultáneos (ej: `P1` y `A`), para clasificar mis items según diferentes dimensiones.

@@ -34,6 +34,9 @@ Para vincular tu bóveda por primera vez:
  ```bash
 ./dev.sh link "/Users/pat/Documents/Obsidian/Obsidian-tester"
 ```
+ ```bash
+./dev.sh link "/Users/pat/Katalizo"
+```
 
 #### 2. Compilar y Actualizar
 

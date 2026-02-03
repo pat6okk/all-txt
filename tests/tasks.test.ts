@@ -13,7 +13,7 @@ describe('Regular Task Parsing (Non-Code Block Tasks)', () => {
       doneKeywords: ["DONE", "CANCELED", "CANCELLED"],
       scheduledKeywords: ["SCHEDULED"],
       deadlineKeywords: ["DEADLINE"],
-      priorityQueues: [],
+      priorityQueues: [['#A', '#B', '#C']],
       priorityKeywords: [],
       workflows: [],
       keywordColors: {},
@@ -33,7 +33,8 @@ describe('Regular Task Parsing (Non-Code Block Tasks)', () => {
 
   describe('Priorities', () => {
     test(`should parse task with high priority`, () => {
-      const line = `- TODO [#A] high priority task`;
+      // US-1.1: Tasks start directly with keyword (no list markers)
+      const line = `TODO #A high priority task`;
       const tasks = parser.parseFile(line, 'test.md');
 
       expect(tasks).toHaveLength(1);
@@ -45,7 +46,7 @@ describe('Regular Task Parsing (Non-Code Block Tasks)', () => {
     });
 
     test(`should parse task with medium priority`, () => {
-      const line = `- TODO [#B] medium priority task`;
+      const line = `TODO #B medium priority task`;
       const tasks = parser.parseFile(line, 'test.md');
 
       expect(tasks).toHaveLength(1);
@@ -57,7 +58,7 @@ describe('Regular Task Parsing (Non-Code Block Tasks)', () => {
     });
 
     test(`should parse task with low priority`, () => {
-      const line = `- TODO [#C] low priority task`;
+      const line = `TODO #C low priority task`;
       const tasks = parser.parseFile(line, 'test.md');
 
       expect(tasks).toHaveLength(1);
@@ -864,16 +865,13 @@ TODO = some code
     });
 
     describe('Callout block with priorities', () => {
-      test('should parse task with priority in callout block', () => {
-        const content = '>[!tip] \n> - TODO [#A] high priority task';
+      test('should NOT parse task with priority in callout block (US-1.1 strict mode)', () => {
+        // US-1.1: Tasks in callout blocks are NOT detected in strict mode
+        const content = '>[!tip] \n> TODO #A high priority task';
         const tasks = parser.parseFile(content, 'test.md');
 
-        expect(tasks).toHaveLength(1);
-        const task = tasks[0];
-        expect(task.state).toBe('TODO');
-        expect(task.completed).toBe(false);
-        expect(task.priority).toBe('#A');
-        expect(task.text).toBe('high priority task');
+        // Strict mode does not detect tasks inside callouts
+        expect(tasks).toHaveLength(0);
       });
     });
 

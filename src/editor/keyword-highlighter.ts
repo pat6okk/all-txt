@@ -5,39 +5,90 @@ import { TodoTrackerSettings } from "../settings/defaults";
 export function keywordHighlighter(getSettings: () => TodoTrackerSettings): Extension {
     const settings = getSettings();
     const keywordMap = new Map<string, string>();
+    const priorityMap = new Map<string, string>();
 
-    // 1. Load explicit colors
-    if (settings.keywordColors) {
-        for (const [k, v] of Object.entries(settings.keywordColors)) {
-            if (k) keywordMap.set(k.toUpperCase(), v);
-        }
-    }
-
-    // 2. Ensure all keywords have at least a default color
-    const allKeywords = new Set([
+    // 1. Identify ONLY active keywords
+    // We ignore orphaned colors in settings.keywordColors that are not in these lists
+    const activeKeywords = new Set([
         ...(settings.todoKeywords || []),
         ...(settings.doingKeywords || []),
-        ...(settings.doneKeywords || [])
+        ...(settings.doneKeywords || []),
+        ...(settings.blockKeywords || [])
     ]);
 
-    allKeywords.forEach(k => {
-        if (!keywordMap.has(k)) {
-            keywordMap.set(k, '#888888'); // Default grey
+    // 2. Build map and assign colors
+    activeKeywords.forEach(k => {
+        if (!k) return;
+        const upperK = k.toUpperCase();
+
+        // Priority 1: Explicit user color
+        if (settings.keywordColors && settings.keywordColors[k]) {
+            keywordMap.set(upperK, settings.keywordColors[k]);
+        }
+        // Priority 2: Default grey if active but no color set (fallback)
+        else {
+            keywordMap.set(upperK, '#888888');
         }
     });
 
-    if (keywordMap.size === 0) return [];
+    // 3. Load priority keywords and their colors
+    const priorityQueues = settings.priorityQueues || [];
+    const allPriorities: string[] = priorityQueues.flat();
 
-    // 3. Build Regex for keyword matching (without capturing whitespace)
+    allPriorities.forEach(p => {
+        const upperP = p.toUpperCase();
+        if (settings.keywordColors && settings.keywordColors[p]) {
+            priorityMap.set(upperP, settings.keywordColors[p]);
+        } else {
+            priorityMap.set(upperP, '#888888');
+        }
+    });
+
+    if (keywordMap.size === 0 && priorityMap.size === 0) return [];
+
+    // 4. Build Regex for state keyword matching
     const escapedKeywords = Array.from(keywordMap.keys())
         .filter(k => k && k.length > 0)
         .map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
         .join('|');
 
-    if (!escapedKeywords) return [];
+    const keywordRegex = escapedKeywords
+        ? new RegExp(`\\b(${escapedKeywords})\\b`, 'i')
+        : null;
 
-    // Regex to match keywords at start of line (after whitespace)
-    const keywordRegex = new RegExp(`\\b(${escapedKeywords})\\b`, 'i');
+    // 5. Build Regex for priority matching (anywhere in line, after state)
+    const escapedPriorities = Array.from(priorityMap.keys())
+        .filter(k => k && k.length > 0)
+        // Sort by length descending to match longer tokens first (P12 before P1)
+        .sort((a, b) => b.length - a.length)
+        .map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+        .join('|');
+
+    const priorityRegex = escapedPriorities
+        ? new RegExp(`(?:^|\\s)(${escapedPriorities})(?=\\s|$)`, 'gi')
+        : null;
+
+    // 5b. Build Regex for block delimiters (full line match)
+    // Matches delimiters that appear alone on a line (with optional whitespace)
+    const blockDelimiters = settings.blockDelimiterPresets || [];
+    const escapedDelimiters = blockDelimiters
+        .filter(d => d && d.length > 0)
+        .map(d => d.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+        .join('|');
+
+    const delimiterRegex = escapedDelimiters
+        ? new RegExp(`^\\s*(${escapedDelimiters})\\s*$`, 'i')
+        : null;
+
+    // 6. Build Regex for label matching (@label syntax) - Épica 5
+    // Matches @word tokens (alphanumeric + underscores/dashes)
+    const labelRegex = /(?:^|\s)(@[A-Za-z][A-Za-z0-9_-]*)(?=\s|$|[.,;:!?])/g;
+
+    // Load label colors from settings
+    const labelColors = settings.labelColors || {};
+
+    // Default label color (purple-ish for visual distinction)
+    const defaultLabelColor = '#BD93F9';
 
     // 4. Helper for contrast color
     const getContrastColor = (hexcolor: string): string => {
@@ -53,18 +104,135 @@ export function keywordHighlighter(getSettings: () => TodoTrackerSettings): Exte
         }
     };
 
-    // 5. ViewPlugin that decorates keywords
+    // 7. ViewPlugin that decorates keywords (now reactive to settings changes)
     return ViewPlugin.fromClass(class {
         decorations: DecorationSet;
+        // Cache current maps and regex (will be rebuilt when settings change)
+        keywordMap: Map<string, string>;
+        priorityMap: Map<string, string>;
+        keywordRegex: RegExp | null;
+        priorityRegex: RegExp | null;
+        delimiterRegex: RegExp | null;
+        labelColors: Record<string, string>;
+        settingsHash: string;
 
         constructor(view: EditorView) {
+            // Initialize with current settings
+            this.settingsHash = "";
+            this.keywordMap = new Map();
+            this.priorityMap = new Map();
+            this.keywordRegex = null;
+            this.priorityRegex = null;
+            this.delimiterRegex = null;
+            this.labelColors = {};
+            this.rebuildMapsAndRegex();
             this.decorations = this.buildDecorations(view);
         }
 
         update(update: ViewUpdate) {
-            if (update.docChanged || update.viewportChanged) {
+            // Check if settings have changed
+            const currentSettings = getSettings();
+            const newHash = this.hashSettings(currentSettings);
+
+            if (newHash !== this.settingsHash) {
+                // Settings changed - rebuild maps and regex
+                this.rebuildMapsAndRegex();
+                this.settingsHash = newHash;
+                // Force full redecoration
+                this.decorations = this.buildDecorations(update.view);
+            } else if (update.docChanged || update.viewportChanged) {
                 this.decorations = this.buildDecorations(update.view);
             }
+        }
+
+        // Generate simple hash of relevant settings to detect changes
+        hashSettings(settings: TodoTrackerSettings): string {
+            const relevantData = [
+                JSON.stringify(settings.todoKeywords),
+                JSON.stringify(settings.doingKeywords),
+                JSON.stringify(settings.doneKeywords),
+                JSON.stringify(settings.blockKeywords),
+                JSON.stringify(settings.blockDelimiterPresets),
+                JSON.stringify(settings.priorityQueues),
+                JSON.stringify(settings.keywordColors),
+                JSON.stringify(settings.labelColors)
+            ];
+            return relevantData.join('|');
+        }
+
+        // Rebuild all maps and regex from current settings
+        rebuildMapsAndRegex() {
+            const settings = getSettings();
+
+            // Clear existing maps
+            this.keywordMap.clear();
+            this.priorityMap.clear();
+
+            // 1. Build keyword map
+            const activeKeywords = new Set([
+                ...(settings.todoKeywords || []),
+                ...(settings.doingKeywords || []),
+                ...(settings.doneKeywords || []),
+                ...(settings.blockKeywords || [])
+            ]);
+
+            activeKeywords.forEach(k => {
+                if (!k) return;
+                const upperK = k.toUpperCase();
+                if (settings.keywordColors && settings.keywordColors[k]) {
+                    this.keywordMap.set(upperK, settings.keywordColors[k]);
+                } else {
+                    this.keywordMap.set(upperK, '#888888');
+                }
+            });
+
+            // 2. Build priority map
+            const priorityQueues = settings.priorityQueues || [];
+            const allPriorities: string[] = priorityQueues.flat();
+
+            allPriorities.forEach(p => {
+                const upperP = p.toUpperCase();
+                if (settings.keywordColors && settings.keywordColors[p]) {
+                    this.priorityMap.set(upperP, settings.keywordColors[p]);
+                } else {
+                    this.priorityMap.set(upperP, '#888888');
+                }
+            });
+
+            // 3. Build keyword regex
+            const escapedKeywords = Array.from(this.keywordMap.keys())
+                .filter(k => k && k.length > 0)
+                .map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+                .join('|');
+
+            this.keywordRegex = escapedKeywords
+                ? new RegExp(`\\b(${escapedKeywords})\\b`, 'i')
+                : null;
+
+            // 4. Build priority regex
+            const escapedPriorities = Array.from(this.priorityMap.keys())
+                .filter(k => k && k.length > 0)
+                .sort((a, b) => b.length - a.length)
+                .map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+                .join('|');
+
+            this.priorityRegex = escapedPriorities
+                ? new RegExp(`(?:^|\\s)(${escapedPriorities})(?=\\s|$)`, 'gi')
+                : null;
+
+            // 5. Build delimiter regex
+            const blockDelimiters = settings.blockDelimiterPresets || [];
+            const escapedDelimiters = blockDelimiters
+                .filter(d => d && d.length > 0)
+                .map(d => d.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+                .join('|');
+
+            this.delimiterRegex = escapedDelimiters
+                ? new RegExp(`^\\s*(${escapedDelimiters})\\s*$`, 'i')
+                : null;
+
+            // 6. Load label colors
+            this.labelColors = settings.labelColors || {};
         }
 
         buildDecorations(view: EditorView): DecorationSet {
@@ -88,32 +256,141 @@ export function keywordHighlighter(getSettings: () => TodoTrackerSettings): Exte
                     const indent = trimmedStart[1].length;
                     const afterIndent = lineText.substring(indent);
 
-                    // Check if line starts with a keyword (after indentation)
-                    const match = afterIndent.match(keywordRegex);
+                    // Check if line starts with a state keyword (after indentation)
+                    if (this.keywordRegex) {
+                        const match = afterIndent.match(this.keywordRegex);
 
-                    if (match && match.index === 0) {
-                        const keyword = match[1].toUpperCase();
-                        const color = keywordMap.get(keyword);
+                        if (match && match.index === 0) {
+                            const keyword = match[1].toUpperCase();
+                            const color = this.keywordMap.get(keyword);
 
-                        if (color) {
+                            if (color) {
+                                const contrast = getContrastColor(color);
+                                const keywordStart = line.from + indent;
+                                const keywordEnd = keywordStart + match[1].length;
+
+                                decorations.push(
+                                    Decoration.mark({
+                                        class: 'cm-todo-keyword',
+                                        attributes: {
+                                            style: `
+                                                background-color: ${color}; 
+                                                color: ${contrast}; 
+                                                border-radius: 3px; 
+                                                padding: 0 4px; 
+                                                font-weight: bold; 
+                                                font-size: 0.85em;
+                                            `
+                                        }
+                                    }).range(keywordStart, keywordEnd)
+                                );
+                            }
+                        }
+                    }
+
+                    // Check for priority tokens anywhere in the line
+                    if (this.priorityRegex) {
+                        // Reset regex lastIndex for each line
+                        this.priorityRegex.lastIndex = 0;
+                        let priorityMatch;
+
+                        while ((priorityMatch = this.priorityRegex.exec(lineText)) !== null) {
+                            const priority = priorityMatch[1].toUpperCase();
+                            const color = this.priorityMap.get(priority);
+
+                            if (color) {
+                                const contrast = getContrastColor(color);
+                                // Calculate position: match.index + leading space length
+                                const matchStart = priorityMatch.index + (priorityMatch[0].length - priorityMatch[1].length);
+                                const priorityStart = line.from + matchStart;
+                                const priorityEnd = priorityStart + priorityMatch[1].length;
+
+                                decorations.push(
+                                    Decoration.mark({
+                                        class: 'cm-todo-priority',
+                                        attributes: {
+                                            style: `
+                                                background-color: ${color}; 
+                                                color: ${contrast}; 
+                                                border-radius: 3px; 
+                                                padding: 0 3px; 
+                                                font-weight: 600; 
+                                                font-size: 0.8em;
+                                                margin-left: 2px;
+                                            `
+                                        }
+                                    }).range(priorityStart, priorityEnd)
+                                );
+                            }
+                        }
+                    }
+
+                    // Check for label tokens (@label) anywhere in the line - Épica 5
+                    labelRegex.lastIndex = 0;
+                    let labelMatch;
+
+                    while ((labelMatch = labelRegex.exec(lineText)) !== null) {
+                        const labelWithAt = labelMatch[1]; // Includes the @
+                        const labelName = labelWithAt.substring(1); // Without @
+
+                        // Get color from settings or use default
+                        const color = this.labelColors[labelName] || this.labelColors[labelWithAt] || defaultLabelColor;
+                        const contrast = getContrastColor(color);
+
+                        // Calculate position
+                        const matchStart = labelMatch.index + (labelMatch[0].length - labelMatch[1].length);
+                        const labelStart = line.from + matchStart;
+                        const labelEnd = labelStart + labelMatch[1].length;
+
+                        decorations.push(
+                            Decoration.mark({
+                                class: 'cm-todo-label',
+                                attributes: {
+                                    style: `
+                                        background-color: ${color}; 
+                                        color: ${contrast}; 
+                                        border-radius: 10px; 
+                                        padding: 0 6px; 
+                                        font-weight: 500; 
+                                        font-size: 0.8em;
+                                        margin-left: 2px;
+                                    `
+                                }
+                            }).range(labelStart, labelEnd)
+                        );
+                    }
+
+                    // Check for block delimiters (full line match)
+                    if (this.delimiterRegex) {
+                        const delimMatch = lineText.match(this.delimiterRegex);
+                        if (delimMatch) {
+                            const delimiter = delimMatch[1];
+                            const delimiterUpper = delimiter.toUpperCase();
+
+                            // Try to find color from keywordMap (it should be there from activeKeywords)
+                            const color = this.keywordMap.get(delimiterUpper) || '#6272A4';
                             const contrast = getContrastColor(color);
-                            const keywordStart = line.from + indent;
-                            const keywordEnd = keywordStart + match[1].length;
+
+                            // Calculate position (accounting for leading whitespace)
+                            const leadingWhitespace = lineText.match(/^\s*/)?.[0] || '';
+                            const delimiterStart = line.from + leadingWhitespace.length;
+                            const delimiterEnd = delimiterStart + delimiter.length;
 
                             decorations.push(
                                 Decoration.mark({
-                                    class: 'cm-todo-keyword',
+                                    class: 'cm-todo-delimiter',
                                     attributes: {
                                         style: `
                                             background-color: ${color}; 
                                             color: ${contrast}; 
                                             border-radius: 3px; 
-                                            padding: 0 4px; 
+                                            padding: 2px 8px; 
                                             font-weight: bold; 
-                                            font-size: 0.85em;
+                                            font-size: 0.9em;
+                                            display: inline-block;
                                         `
                                     }
-                                }).range(keywordStart, keywordEnd)
+                                }).range(delimiterStart, delimiterEnd)
                             );
                         }
                     }

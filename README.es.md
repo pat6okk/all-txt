@@ -101,7 +101,7 @@ Todo es configurable en Settings → FLOW.txt:
 
 - **Define tu vocabulario**: Añade las palabras clave que quieras (estados, colores, tooltips)
 - **Construye workflows**: Conecta estados con reglas de transición personalizadas
-- **Configura prioridades**: `[P1]`, `[#A]`, o tokens personalizados como `#Urgente`
+- **Configura prioridades/labels**: `P1`, `A`, o tokens personalizados como `#Urgente`
 - **Añade fechas**: `SCHEDULED: 25/12/2025` o `DEADLINE: 2025-12-31`
   - Formatos flexibles: `DD/MM/YYYY`, `YYYY-MM-DD`, o `MM-DD-YYYY`
   - Lenguaje natural: "mañana", "next Friday" (en inglés por ahora)
@@ -138,6 +138,26 @@ CONTACTED Propuesta y pricing enviados
 QUALIFIED Presupuesto confirmado, decisión la próxima semana
 CLOSED Contrato firmado 🎉
 ```
+
+### Bloques de Contenido Estricto
+
+FLOW.txt captura automáticamente el contexto de tus items. Ahora puedes controlar explícitamente dónde termina una tarea usando **Delimitadores de Bloque**:
+
+```markdown
+TODO Tarea compleja
+- Paso 1
+- Paso 2
+> Nota importante
+END-FLOW
+
+Texto normal que ya no pertenece a la tarea...
+```
+
+**Configuración:**
+En **Settings > Block Delimiters**, puedes:
+- Elegir entre presets como `END-FLOW`, `FIN`, `---`, `:::`.
+- Crear tus propios delimitadores personalizados.
+- Asignarles color para que destaquen visualmente en tu editor.
 
 ---
 

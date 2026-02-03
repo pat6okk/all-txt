@@ -1,12 +1,12 @@
 import { TodoTrackerSettings, DEFAULT_SETTINGS } from '../settings/defaults';
-import TodoInlinePlugin from '../main';
+import FlowTxtPlugin from '../main';
 
 // Central service for manipulating settings
 // Replaces disjointed logic in React components
 export class SettingsService {
-    private plugin: TodoInlinePlugin;
+    private plugin: FlowTxtPlugin;
 
-    constructor(plugin: TodoInlinePlugin) {
+    constructor(plugin: FlowTxtPlugin) {
         this.plugin = plugin;
     }
 
@@ -25,7 +25,7 @@ export class SettingsService {
     // --- Vocabulary Management ---
 
     async updateVocabulary(
-        type: 'todoKeywords' | 'doingKeywords' | 'doneKeywords',
+        type: 'todoKeywords' | 'doingKeywords' | 'doneKeywords' | 'blockKeywords',
         newKeywords: string[],
         oldKeyword?: string
     ) {
@@ -51,6 +51,7 @@ export class SettingsService {
             case 'doneKeywords': return '#50FA7B';
             case 'scheduledKeywords': return '#6272A4';
             case 'deadlineKeywords': return '#FF79C6';
+            case 'blockKeywords': return '#6272A4';
             default: return '#888888';
         }
     }
@@ -162,7 +163,20 @@ export class SettingsService {
         await this.save();
     }
 
-    async deleteKeywordFromVocabulary(type: 'todoKeywords' | 'doingKeywords' | 'doneKeywords', idx: number) {
+    getContrastColor(hexcolor: string): string {
+        try {
+            const hex = hexcolor.replace('#', '');
+            const r = parseInt(hex.substr(0, 2), 16);
+            const g = parseInt(hex.substr(2, 2), 16);
+            const b = parseInt(hex.substr(4, 2), 16);
+            const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+            return (yiq >= 128) ? 'black' : 'white';
+        } catch (e) {
+            return 'white';
+        }
+    }
+
+    async deleteKeywordFromVocabulary(type: 'todoKeywords' | 'doingKeywords' | 'doneKeywords' | 'blockKeywords', idx: number) {
         const k = this.settings[type][idx];
         // Remove from list
         const newKw = [...this.settings[type]];
@@ -183,6 +197,44 @@ export class SettingsService {
         await this.save();
     }
 
+    // --- Block Delimiter Presets ---
+
+    async addBlockPreset(newPreset: string) {
+        if (!this.settings.blockDelimiterPresets.includes(newPreset)) {
+            this.settings.blockDelimiterPresets = [...this.settings.blockDelimiterPresets, newPreset];
+            // Initialize with default color if not exists
+            if (!this.settings.keywordColors[newPreset]) {
+                await this.updateKeywordMetadata(newPreset, '#6272A4', '');
+            } else {
+                await this.save();
+            }
+        }
+    }
+
+    async deleteBlockPreset(preset: string) {
+        this.settings.blockDelimiterPresets = this.settings.blockDelimiterPresets.filter(p => p !== preset);
+
+        // If we deleted the active delimiter, switch to default or first available
+        if (this.settings.blockKeywords.length > 0 && this.settings.blockKeywords[0] === preset) {
+            const next = this.settings.blockDelimiterPresets[0] || 'END-FLOW';
+            this.settings.blockKeywords = [next];
+        }
+
+        await this.save();
+    }
+
+    async resetBlockPresets() {
+        this.settings.blockDelimiterPresets = [...DEFAULT_SETTINGS.blockDelimiterPresets];
+        this.settings.blockKeywords = [...DEFAULT_SETTINGS.blockKeywords];
+        // Apply default colors
+        DEFAULT_SETTINGS.blockDelimiterPresets.forEach(k => {
+            if (DEFAULT_SETTINGS.keywordColors[k]) {
+                this.settings.keywordColors[k] = DEFAULT_SETTINGS.keywordColors[k];
+            }
+        });
+        await this.save();
+    }
+
 
     // --- Resets ---
 
@@ -190,11 +242,13 @@ export class SettingsService {
         this.settings.todoKeywords = [...DEFAULT_SETTINGS.todoKeywords];
         this.settings.doingKeywords = [...DEFAULT_SETTINGS.doingKeywords];
         this.settings.doneKeywords = [...DEFAULT_SETTINGS.doneKeywords];
+        this.settings.blockKeywords = [...DEFAULT_SETTINGS.blockKeywords];
 
         this.applyDefaultColors([
             ...DEFAULT_SETTINGS.todoKeywords,
             ...DEFAULT_SETTINGS.doingKeywords,
-            ...DEFAULT_SETTINGS.doneKeywords
+            ...DEFAULT_SETTINGS.doneKeywords,
+            ...DEFAULT_SETTINGS.blockKeywords
         ]);
         await this.save();
     }

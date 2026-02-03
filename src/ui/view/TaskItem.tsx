@@ -32,6 +32,9 @@ interface TaskItemProps {
     getNextPriority: (current: string | null) => string | null;
     // US-4.1: Date management
     onDateContextMenu: (task: Task, dateType: 'scheduled' | 'deadline', e: React.MouseEvent) => void;
+    // Épica 5: Label management
+    onLabelContextMenu: (task: Task, label: string, e: React.MouseEvent) => void;
+    availableLabels?: string[];
 }
 
 export const TaskItem: React.FC<TaskItemProps> = ({
@@ -39,10 +42,10 @@ export const TaskItem: React.FC<TaskItemProps> = ({
     getContrastColor, getNextState, formatDate, getDateClasses,
     keywordDescriptions, scheduledColor, deadlineColor, scheduledKeyword, deadlineKeyword,
     onUpdatePriority, onPriorityContextMenu, getNextPriority,
-    onDateContextMenu
+    onDateContextMenu, onLabelContextMenu, availableLabels
 }) => {
     // State for expanding/collapsing block content
-    const [expanded, setExpanded] = React.useState(false);
+    const [expanded, setExpanded] = React.useState(true);
 
     // Only show expander if there are actual subtasks OR non-empty text content
     const hasRealTextContent = task.blockContent && task.blockContent.some(line => line.trim().length > 0);
@@ -167,6 +170,33 @@ export const TaskItem: React.FC<TaskItemProps> = ({
                             {task.priority}
                         </span>
                     )}
+
+                    {/* Labels - Épica 5 */}
+                    {task.labels && task.labels.length > 0 && task.labels.map((label, idx) => (
+                        <span
+                            key={`${label}-${idx}`}
+                            className="label-badge"
+                            role="button"
+                            style={{
+                                backgroundColor: '#BD93F9',
+                                color: 'white',
+                                marginRight: '4px',
+                                padding: '1px 6px',
+                                borderRadius: '10px',
+                                fontSize: '0.7em',
+                                fontWeight: 500,
+                                cursor: 'pointer'
+                            }}
+                            title={`Right-click for options`}
+                            onContextMenu={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                onLabelContextMenu(task, label, e);
+                            }}
+                        >
+                            @{label}
+                        </span>
+                    ))}
 
                     <span
                         className="todo-text-content"

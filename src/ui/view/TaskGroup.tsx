@@ -29,6 +29,9 @@ interface TaskGroupProps {
     getNextPriority: (current: string | null) => string | null;
     // US-4.1: Date management
     onDateContextMenu: (task: Task, dateType: 'scheduled' | 'deadline', e: React.MouseEvent) => void;
+    // Épica 5: Label management
+    onLabelContextMenu: (task: Task, label: string, e: React.MouseEvent) => void;
+    availableLabels?: string[];
 }
 
 export const TaskGroup: React.FC<TaskGroupProps> = (props) => {
@@ -90,6 +93,8 @@ export const TaskGroup: React.FC<TaskGroupProps> = (props) => {
                             onPriorityContextMenu={props.onPriorityContextMenu}
                             getNextPriority={props.getNextPriority}
                             onDateContextMenu={props.onDateContextMenu}
+                            onLabelContextMenu={props.onLabelContextMenu}
+                            availableLabels={props.availableLabels}
                         />
                     ))}
                 </ul>

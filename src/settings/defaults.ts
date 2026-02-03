@@ -10,6 +10,7 @@ export type DateFilterMode = 'all' | 'overdue' | 'today' | 'thisWeek' | 'noDate'
 export interface AdvancedFilters {
     states: string[]; // Empty array = show all states
     priorities: string[]; // Empty array = show all priorities
+    labels: string[]; // Empty array = show all labels - Épica 5
     dateMode: DateFilterMode;
 }
 
@@ -43,6 +44,16 @@ export interface TodoTrackerSettings {
 
     // Date formatting
     dateFormat: DateInputFormat;
+
+    // Labels system - Épica 5
+    labelMode: 'free' | 'defined'; // 'free' = any @text is a label, 'defined' = only predefined labels
+    definedLabels: string[]; // List of predefined labels when in 'defined' mode
+    labelColors: Record<string, string>; // label -> hex color
+
+    // Block parsing
+    blockKeywords: string[];
+    blockDelimiterPresets: string[]; // Library of available delimiters
+
 
     languageCommentSupport: LanguageCommentSupportSettings;
 }
@@ -80,7 +91,12 @@ export const DEFAULT_SETTINGS: TodoTrackerSettings = {
         'P1': '#FF5555',
         'P2': '#FFB86C',
         'P3': '#F1FA8C',
-        'P4': '#50FA7B'
+        'P4': '#50FA7B',
+        // Block Delimiters
+        'END-FLOW': '#6272A4',
+        'FIN': '#6272A4',
+        'STOP': '#6272A4',
+        'BLOCK-END': '#6272A4'
     },
     keywordDescriptions: {},
     includeCalloutBlocks: true,
@@ -91,10 +107,18 @@ export const DEFAULT_SETTINGS: TodoTrackerSettings = {
     advancedFilters: {
         states: [],
         priorities: [],
+        labels: [],
         dateMode: 'all'
     },
     collapsedPaths: [],
     dateFormat: 'DD/MM/YYYY',
+    // Labels - Épica 5
+    labelMode: 'free',
+    definedLabels: [],
+    labelColors: {},
+    // Block parsing
+    blockKeywords: ['END-FLOW'],
+    blockDelimiterPresets: ['END-FLOW', 'FIN', 'STOP', 'BLOCK-END', '---', '***'],
     languageCommentSupport: {
         enabled: true,
     }

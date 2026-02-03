@@ -7,13 +7,15 @@ interface AdvancedFiltersPanelProps {
     // Available options
     availableStates: string[];
     availablePriorities: string[];
+    availableLabels: string[]; // Épica 5
 }
 
 export const AdvancedFiltersPanel: React.FC<AdvancedFiltersPanelProps> = ({
     filters,
     onChange,
     availableStates,
-    availablePriorities
+    availablePriorities,
+    availableLabels
 }) => {
     const [expanded, setExpanded] = React.useState(false);
 
@@ -35,12 +37,22 @@ export const AdvancedFiltersPanel: React.FC<AdvancedFiltersPanelProps> = ({
         onChange({ ...filters, dateMode: mode });
     };
 
+    // Épica 5: Toggle label filter
+    const toggleLabel = (label: string) => {
+        const currentLabels = filters.labels || [];
+        const newLabels = currentLabels.includes(label)
+            ? currentLabels.filter(l => l !== label)
+            : [...currentLabels, label];
+        onChange({ ...filters, labels: newLabels });
+    };
+
     const clearAll = () => {
-        onChange({ states: [], priorities: [], dateMode: 'all' });
+        onChange({ states: [], priorities: [], labels: [], dateMode: 'all' });
     };
 
     const hasActiveFilters = filters.states.length > 0 ||
         filters.priorities.length > 0 ||
+        (filters.labels && filters.labels.length > 0) ||
         filters.dateMode !== 'all';
 
     return (
@@ -154,6 +166,38 @@ export const AdvancedFiltersPanel: React.FC<AdvancedFiltersPanelProps> = ({
                                         {priority}
                                     </button>
                                 ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Labels Filter - Épica 5 */}
+                    {availableLabels.length > 0 && (
+                        <div className="filter-section" style={{ marginBottom: '12px' }}>
+                            <div style={{ fontSize: '0.85em', fontWeight: 600, marginBottom: '4px', color: 'var(--text-muted)' }}>
+                                Labels:
+                            </div>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                                {availableLabels.map(label => {
+                                    const isActive = (filters.labels || []).includes(label);
+                                    return (
+                                        <button
+                                            key={label}
+                                            className={`filter-chip ${isActive ? 'is-active' : ''}`}
+                                            style={{
+                                                padding: '2px 8px',
+                                                fontSize: '0.8em',
+                                                borderRadius: '10px',
+                                                border: '1px solid var(--background-modifier-border)',
+                                                backgroundColor: isActive ? '#BD93F9' : 'var(--background-secondary)',
+                                                color: isActive ? 'white' : 'var(--text-normal)',
+                                                cursor: 'pointer'
+                                            }}
+                                            onClick={() => toggleLabel(label)}
+                                        >
+                                            @{label}
+                                        </button>
+                                    );
+                                })}
                             </div>
                         </div>
                     )}

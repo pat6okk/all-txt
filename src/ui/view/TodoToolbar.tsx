@@ -22,6 +22,7 @@ interface TodoToolbarProps {
     // Dynamic options
     availableStates?: string[];
     availablePriorities?: string[];
+    availableLabels?: string[]; // Épica 5
 }
 
 export const TodoToolbar: React.FC<TodoToolbarProps> = ({
@@ -33,7 +34,8 @@ export const TodoToolbar: React.FC<TodoToolbarProps> = ({
     filterActive, onFilterActiveChange,
     taskCount, totalCount,
     availableStates = [],
-    availablePriorities = []
+    availablePriorities = [],
+    availableLabels = []
 }) => {
 
     // Refs for icons
@@ -126,6 +128,7 @@ export const TodoToolbar: React.FC<TodoToolbarProps> = ({
                 onChange={onAdvancedFiltersChange}
                 availableStates={availableStates}
                 availablePriorities={availablePriorities}
+                availableLabels={availableLabels}
             />
         </div>
     );

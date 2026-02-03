@@ -1,12 +1,14 @@
 import { App, Modal, Setting } from "obsidian";
 
 interface KeywordEditResult {
+    newName: string;
     color: string;
     description: string; // Tooltip text
 }
 
 export class KeywordEditModal extends Modal {
     keyword: string;
+    originalKeyword: string;
     color: string;
     description: string;
     onSubmit: (result: KeywordEditResult) => void;
@@ -20,6 +22,7 @@ export class KeywordEditModal extends Modal {
     ) {
         super(app);
         this.keyword = keyword;
+        this.originalKeyword = keyword;
         this.color = initialColor || "#888888"; // Default grey
         this.description = initialDesc || "";
         this.onSubmit = onSubmit;
@@ -42,7 +45,19 @@ export class KeywordEditModal extends Modal {
 
     onOpen() {
         const { contentEl } = this;
-        contentEl.createEl("h2", { text: `Edit Keyword: ${this.keyword}` });
+        contentEl.createEl("h2", { text: `Edit Keyword` });
+
+        // 0. Name Edit
+        new Setting(contentEl)
+            .setName("Keyword Text")
+            .setDesc("The actual text used in the editor.")
+            .addText((text) =>
+                text
+                    .setValue(this.keyword)
+                    .onChange((value) => {
+                        this.keyword = value;
+                    })
+            );
 
         // 1. Description (Tooltip) - Moved up for better flow
         new Setting(contentEl)
@@ -170,6 +185,7 @@ export class KeywordEditModal extends Modal {
         const saveBtn = footer.createEl("button", { text: "Save", cls: "mod-cta" });
         saveBtn.addEventListener("click", () => {
             this.onSubmit({
+                newName: this.keyword,
                 color: this.color,
                 description: this.description,
             });

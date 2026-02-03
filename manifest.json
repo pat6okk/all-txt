@@ -1,7 +1,7 @@
 {
 	"id": "flow-txt",
 	"name": "FLOW.txt",
-	"version": "0.2.0",
+	"version": "0.3.0",
 	"minAppVersion": "0.16.0",
 	"description": "Keyword-driven state tracking for plain Markdown. Track tasks, decisions, knowledge, research—anything. Inspired by TODO.txt.",
 	"author": "Pat6okk",

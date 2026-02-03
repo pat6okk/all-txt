@@ -16,7 +16,7 @@ import { TodoViewRoot } from '../ui/view/TodoViewRoot';
 export const TASK_VIEW_ICON = "list-todo";
 
 export class TodoView extends ItemView {
-  static viewType = "todoinline-view";
+  static viewType = "flowtxt-view";
   tasks: Task[];
   editor: TaskEditor;
 
@@ -54,7 +54,7 @@ export class TodoView extends ItemView {
   }
 
   getDisplayText(): string {
-    return "Todo Inline View";
+    return "FLOW-txt Tasks";
   }
 
   getIcon(): string {
@@ -142,9 +142,11 @@ export class TodoView extends ItemView {
     // 4. View Mode & Sort Logic
     displayTasks = this.transformForView(displayTasks, this.getViewMode());
 
-    // Extract available states and priorities for filters
+    // Extract available states, priorities, and labels for filters
     const availableStates = Array.from(new Set(this.tasks.map(t => t.state)));
     const availablePriorities = Array.from(new Set(this.tasks.map(t => t.priority).filter(p => p !== null))) as string[];
+    // Épica 5: Extract all unique labels
+    const availableLabels = Array.from(new Set(this.tasks.flatMap(t => t.labels || [])));
 
 
     this.root.render(
@@ -158,6 +160,7 @@ export class TodoView extends ItemView {
         advancedFilters={this.taskStore.getSettings().advancedFilters}
         availableStates={availableStates}
         availablePriorities={availablePriorities}
+        availableLabels={availableLabels}
         filterActive={this.filterActive}
 
         // Actions
@@ -218,6 +221,9 @@ export class TodoView extends ItemView {
         // Phase 17b Labels
         scheduledKeyword={this.taskStore.getSettings().scheduledKeywords[0] || 'SCHEDULED'}
         deadlineKeyword={this.taskStore.getSettings().deadlineKeywords[0] || 'DEADLINE'}
+
+        // Épica 5: Labels
+        onLabelContextMenu={(t, label, e) => this.openLabelMenuAtMouseEvent(t, label, e.nativeEvent)}
       />
     );
   }
@@ -332,7 +338,16 @@ export class TodoView extends ItemView {
       filtered = filtered.filter(t => t.priority && filters.priorities.includes(t.priority));
     }
 
-    // 3. Filter by Date
+    // 3. Filter by Labels - Épica 5
+    if (filters.labels && filters.labels.length > 0) {
+      filtered = filtered.filter(t => {
+        if (!t.labels || t.labels.length === 0) return false;
+        // Task must have at least one of the selected labels
+        return filters.labels.some(label => t.labels.includes(label));
+      });
+    }
+
+    // 4. Filter by Date
     if (filters.dateMode !== 'all') {
       const now = new Date();
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -451,6 +466,96 @@ export class TodoView extends ItemView {
     });
 
     menu.showAtMouseEvent(evt);
+  }
+
+  /**
+   * Épica 5: Open context menu for label management
+   * @param task The task that contains the label
+   * @param label The specific label that was clicked
+   * @param evt Mouse event for positioning
+   */
+  private openLabelMenuAtMouseEvent(task: Task, label: string, evt: MouseEvent) {
+    const menu = new Menu();
+
+    // Get all available labels
+    const allLabels = Array.from(new Set(this.tasks.flatMap(t => t.labels || [])));
+    const otherLabels = allLabels.filter(l => l !== label).sort();
+
+    // Header
+    menu.addItem(item => {
+      item.setTitle(`Label: @${label}`)
+        .setIcon('tag')
+        .setDisabled(true);
+    });
+
+    menu.addSeparator();
+
+    // Change to another label
+    if (otherLabels.length > 0) {
+      menu.addItem(item => {
+        item.setTitle('Change to:')
+          .setIcon('edit')
+          .setDisabled(true);
+      });
+
+      otherLabels.slice(0, 15).forEach(newLabel => {
+        menu.addItem(item => {
+          item.setTitle(`  @${newLabel}`)
+            .onClick(async () => {
+              await this.updateTaskLabel(task, label, newLabel);
+            });
+        });
+      });
+
+      menu.addSeparator();
+    }
+
+    // Remove label
+    menu.addItem(item => {
+      item.setTitle('Remove Label')
+        .setIcon('trash-2')
+        .onClick(async () => {
+          await this.updateTaskLabel(task, label, null);
+        });
+    });
+
+    // Copy label
+    menu.addItem(item => {
+      item.setTitle('Copy Label')
+        .setIcon('copy')
+        .onClick(() => {
+          navigator.clipboard.writeText(`@${label}`);
+        });
+    });
+
+    menu.showAtMouseEvent(evt);
+  }
+
+  /**
+   * Épica 5: Update a label in a task
+   * @param task The task to update
+   * @param oldLabel The label to replace/remove
+   * @param newLabel The new label (or null to remove)
+   */
+  private async updateTaskLabel(task: Task, oldLabel: string, newLabel: string | null) {
+    const file = this.app.vault.getAbstractFileByPath(task.path);
+    if (!(file instanceof TFile)) return;
+
+    const content = await this.app.vault.read(file);
+    const lines = content.split('\n');
+    const taskLine = lines[task.line];
+
+    let updatedLine: string;
+    if (newLabel) {
+      // Replace the label
+      updatedLine = taskLine.replace(new RegExp(`@${oldLabel}\\b`), `@${newLabel}`);
+    } else {
+      // Remove the label (and cleanup extra spaces)
+      updatedLine = taskLine.replace(new RegExp(`\\s*@${oldLabel}\\b`), '').replace(/\s+/g, ' ').trim();
+    }
+
+    lines[task.line] = updatedLine;
+    await this.app.vault.modify(file, lines.join('\n'));
   }
 
   /**

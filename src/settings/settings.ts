@@ -21,7 +21,7 @@ export class TodoTrackerSettingTab extends PluginSettingTab {
     containerEl.empty();
 
     // Add a class for styling scope
-    containerEl.addClass('todo-inline-settings-root');
+    containerEl.addClass('flowtxt-settings-root');
 
     // Create a wrapper div for React
     const reactRoot = containerEl.createDiv();

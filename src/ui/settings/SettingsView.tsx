@@ -2,7 +2,7 @@ import * as React from 'react';
 import TodoTracker from '../../main';
 import { VocabularySection } from './VocabularySection';
 import { WorkflowsSection } from './WorkflowsSection';
-
+import { BlockDelimitersSection } from './BlockDelimitersSection';
 import { MetadataSection } from './MetadataSection';
 import { DEFAULT_SETTINGS } from '../../settings/defaults';
 
@@ -20,11 +20,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ plugin, settingsServ
 
     return (
         <div className="todo-settings-view">
-            <h1>TODO inline Settings (React Framework)</h1>
+            <h1>FLOW-txt Settings</h1>
             <p>Refactored Settings View v0.2.0-alpha</p>
 
             <VocabularySection plugin={plugin} settingsService={settingsService} onSettingsChange={triggerRefresh} />
             <WorkflowsSection plugin={plugin} settingsService={settingsService} onSettingsChange={triggerRefresh} />
+            <BlockDelimitersSection plugin={plugin} settingsService={settingsService} onSettingsChange={triggerRefresh} />
             <MetadataSection plugin={plugin} settingsService={settingsService} onSettingsChange={triggerRefresh} />
         </div>
     );

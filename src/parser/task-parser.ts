@@ -65,6 +65,7 @@ export class TaskParser {
   private deadlineKeywords: string[];
   private priorityKeywords: string[];
   private priorityQueues: string[][];
+  private blockKeywords: string[]; // Keywords array
 
   private constructor(
     regex: RegexPair,
@@ -75,7 +76,8 @@ export class TaskParser {
     completedKeywords: Set<string>,
     scheduledKeywords: string[],
     deadlineKeywords: string[],
-    priorityQueues: string[][]
+    priorityQueues: string[][],
+    blockKeywords: string[]
   ) {
     this.allKeywords = allKeywords;
     this.completedKeywords = completedKeywords;
@@ -90,6 +92,7 @@ export class TaskParser {
     this.includeCalloutBlocks = includeCalloutBlocks;
     this.includeCodeBlocks = includeCodeBlocks;
     this.languageCommentSupport = languageCommentSupport;
+    this.blockKeywords = blockKeywords;
   }
 
 
@@ -126,7 +129,8 @@ export class TaskParser {
       completedSet,
       settings.scheduledKeywords || ['SCHEDULED'],
       settings.deadlineKeywords || ['DEADLINE'],
-      pQueues
+      pQueues,
+      settings.blockKeywords || ['END', 'FIN', 'STOP']
     );
   }
 
@@ -274,6 +278,55 @@ export class TaskParser {
     }
 
     return { priority, priorityLabel, cleanedText };
+  }
+
+  /**
+   * Extract labels from task text - Épica 5
+   * Labels use the @syntax (e.g., @Work, @Urgent)
+   * @param taskText The task text to parse
+   * @returns Labels array and cleaned text
+   */
+  private extractLabels(taskText: string): { labels: string[]; cleanedText: string } {
+    const labels: string[] = [];
+
+    // Guard against undefined/null input
+    if (!taskText) {
+      return { labels, cleanedText: taskText || '' };
+    }
+
+    let cleanedText = taskText;
+
+    // Regex to match @label tokens
+    // Matches: @word (alphanumeric + underscores, at least 1 char)
+    // Does NOT match: @@ or @ alone or email-like patterns
+    const labelRegex = /(?:^|\s)@([A-Za-z][A-Za-z0-9_-]*)(?=\s|$|[.,;:!?])/g;
+
+    let match;
+    const foundLabels: { label: string; fullMatch: string; index: number }[] = [];
+
+    while ((match = labelRegex.exec(taskText)) !== null) {
+      foundLabels.push({
+        label: match[1],
+        fullMatch: match[0],
+        index: match.index
+      });
+    }
+
+    // Extract labels and clean text (process in reverse to maintain indices)
+    for (let i = foundLabels.length - 1; i >= 0; i--) {
+      const { label, fullMatch, index } = foundLabels[i];
+      labels.unshift(label); // Add to front to maintain order
+
+      // Remove the label from text
+      const before = cleanedText.slice(0, index);
+      const after = cleanedText.slice(index + fullMatch.length);
+      cleanedText = before + after;
+    }
+
+    // Clean up extra whitespace
+    cleanedText = cleanedText.replace(/\s+/g, ' ').trim();
+
+    return { labels, cleanedText };
   }
 
   /**
@@ -502,8 +555,11 @@ export class TaskParser {
       // Extract task details using the regular are langauge speciifc code regex
       const taskDetails = this.extractTaskDetails(line, (useCodeRegex && codeRegex) ? codeRegex.capture : this.captureRegex);
 
-      // Extract priority
-      const { priority, priorityLabel, cleanedText } = this.extractPriority(taskDetails.taskText);
+      // Extract priority first
+      const { priority, priorityLabel, cleanedText: textAfterPriority } = this.extractPriority(taskDetails.taskText);
+
+      // Extract labels - Épica 5
+      const { labels, cleanedText: finalText } = this.extractLabels(textAfterPriority);
 
       // US-1.1: No checkbox extraction needed in strict mode
       // State is directly from the keyword, completed status from completedKeywords set
@@ -517,11 +573,12 @@ export class TaskParser {
         rawText: line,
         indent: taskDetails.indent,
         listMarker: taskDetails.listMarker, // Will be empty string in strict mode
-        text: cleanedText,
+        text: finalText,
         state: finalState,
         completed: finalCompleted,
         priority,
         priorityLabel,
+        labels, // Épica 5
         scheduledDate: null,
         deadlineDate: null,
         tail: taskDetails.tail,
@@ -551,8 +608,10 @@ export class TaskParser {
           }
         }
 
-        // Check for delimiter
-        if (scanLine === '---') {
+        // Check for block delimiter keyword
+        // Match if the first word of the line is one of the block keywords
+        const firstWord = scanLine.split(/\s+/)[0];
+        if (this.blockKeywords.includes(firstWord)) {
           delimiterFound = true;
           delimiterLine = scan;
           break;

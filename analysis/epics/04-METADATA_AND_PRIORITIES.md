@@ -4,6 +4,10 @@
 
 **Componentes principales:** [ENGINE] [VIEW] [CONFIG]  
 **Prioridad:** Should Have
+**Estado:** ✅ COMPLETADO (2026-02-02)
+
+> **Resumen de Cierre**:
+> Se ha implementado exitosamente un sistema flexible de parsing de fechas (sin delimitadores), un selector de fecha nativo (HTML5) integrado en Panel y Editor, y configuración de preferencias de formato. Las prioridades se mantienen en su implementación funcional actual, con un roadmap claro para evolucionar a "Labels" en el futuro.
 
 ---
 

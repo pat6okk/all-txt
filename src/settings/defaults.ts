@@ -1,6 +1,7 @@
 
 import { TaskViewMode } from "../task";
 import { LanguageCommentSupportSettings, LanguageDefinition } from "../parser/language-registry";
+import { DateInputFormat } from "../parser/date-parser";
 
 export type SortMethod = 'default' | 'sortByScheduled' | 'sortByDeadline' | 'sortByPriority';
 export type GroupingMethod = 'none' | 'byState' | 'byFile';
@@ -39,6 +40,9 @@ export interface TodoTrackerSettings {
     groupingMethod: GroupingMethod;
     advancedFilters: AdvancedFilters;
     collapsedPaths: string[];
+
+    // Date formatting
+    dateFormat: DateInputFormat;
 
     languageCommentSupport: LanguageCommentSupportSettings;
 }
@@ -90,6 +94,7 @@ export const DEFAULT_SETTINGS: TodoTrackerSettings = {
         dateMode: 'all'
     },
     collapsedPaths: [],
+    dateFormat: 'DD/MM/YYYY',
     languageCommentSupport: {
         enabled: true,
     }

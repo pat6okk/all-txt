@@ -26,6 +26,8 @@ interface TodoListProps {
     onUpdatePriority: (task: Task, nextPriority: string | null) => void;
     onPriorityContextMenu: (task: Task, e: React.MouseEvent) => void;
     getNextPriority: (current: string | null) => string | null;
+    // US-4.1: Date management
+    onDateContextMenu: (task: Task, dateType: 'scheduled' | 'deadline', e: React.MouseEvent) => void;
 }
 
 export const TodoList: React.FC<TodoListProps> = (props) => {

@@ -30,13 +30,16 @@ interface TaskItemProps {
     onUpdatePriority: (task: Task, nextPriority: string | null) => void;
     onPriorityContextMenu: (task: Task, e: React.MouseEvent) => void;
     getNextPriority: (current: string | null) => string | null;
+    // US-4.1: Date management
+    onDateContextMenu: (task: Task, dateType: 'scheduled' | 'deadline', e: React.MouseEvent) => void;
 }
 
 export const TaskItem: React.FC<TaskItemProps> = ({
     task, getKeywordColor, onUpdateState, onToggle, onOpenTask, onContextMenu,
     getContrastColor, getNextState, formatDate, getDateClasses,
     keywordDescriptions, scheduledColor, deadlineColor, scheduledKeyword, deadlineKeyword,
-    onUpdatePriority, onPriorityContextMenu, getNextPriority
+    onUpdatePriority, onPriorityContextMenu, getNextPriority,
+    onDateContextMenu
 }) => {
     // State for expanding/collapsing block content
     const [expanded, setExpanded] = React.useState(false);
@@ -174,7 +177,15 @@ export const TaskItem: React.FC<TaskItemProps> = ({
                     {(task.scheduledDate || task.deadlineDate) && (
                         <div className="todo-meta-row" style={{ marginTop: '4px', fontSize: '0.85em', color: 'var(--text-muted)', display: 'flex', gap: '12px' }}>
                             {task.scheduledDate && (
-                                <span className={`todo-date-item ${getDateClasses(task.scheduledDate, false).join(' ')}`}>
+                                <span
+                                    className={`todo-date-item ${getDateClasses(task.scheduledDate, false).join(' ')}`}
+                                    onContextMenu={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        onDateContextMenu(task, 'scheduled', e);
+                                    }}
+                                    style={{ cursor: 'context-menu' }}
+                                >
                                     <span style={{ fontWeight: 600, color: scheduledColor }}>
                                         {task.scheduledSymbol || scheduledKeyword || 'SCHEDULED'}:
                                     </span>
@@ -182,7 +193,15 @@ export const TaskItem: React.FC<TaskItemProps> = ({
                                 </span>
                             )}
                             {task.deadlineDate && (
-                                <span className={`todo-date-item ${getDateClasses(task.deadlineDate, true).join(' ')}`}>
+                                <span
+                                    className={`todo-date-item ${getDateClasses(task.deadlineDate, true).join(' ')}`}
+                                    onContextMenu={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        onDateContextMenu(task, 'deadline', e);
+                                    }}
+                                    style={{ cursor: 'context-menu' }}
+                                >
                                     <span style={{ fontWeight: 600, color: deadlineColor }}>
                                         {task.deadlineSymbol || deadlineKeyword || 'DEADLINE'}:
                                     </span>

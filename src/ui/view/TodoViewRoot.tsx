@@ -33,6 +33,8 @@ interface TodoViewRootProps {
     // Phase 18
     onUpdatePriority: (task: Task, nextPriority: string | null) => void;
     onPriorityContextMenu: (task: Task, e: React.MouseEvent) => void;
+    // US-4.1: Date management
+    onDateContextMenu: (task: Task, dateType: 'scheduled' | 'deadline', e: React.MouseEvent) => void;
 
     // Services / Utils
     getKeywordColor: (k: string) => string;
@@ -130,6 +132,7 @@ export const TodoViewRoot: React.FC<TodoViewRootProps> = (props) => {
                                 onUpdatePriority={props.onUpdatePriority}
                                 onPriorityContextMenu={props.onPriorityContextMenu}
                                 getNextPriority={props.getNextPriority}
+                                onDateContextMenu={props.onDateContextMenu}
                             />
                         ))}
                     </div>
@@ -166,6 +169,7 @@ export const TodoViewRoot: React.FC<TodoViewRootProps> = (props) => {
                         onUpdatePriority={props.onUpdatePriority}
                         onPriorityContextMenu={props.onPriorityContextMenu}
                         getNextPriority={props.getNextPriority}
+                        onDateContextMenu={props.onDateContextMenu}
                     />
                 )}
             </div>
@@ -194,6 +198,7 @@ interface TaskGroupProps {
     onUpdatePriority: (task: Task, nextPriority: string | null) => void;
     onPriorityContextMenu: (task: Task, e: React.MouseEvent) => void;
     getNextPriority: (current: string | null) => string | null;
+    onDateContextMenu: (task: Task, dateType: 'scheduled' | 'deadline', e: React.MouseEvent) => void;
 }
 
 const TaskGroup: React.FC<TaskGroupProps> = (props) => {
@@ -272,6 +277,7 @@ const TaskGroup: React.FC<TaskGroupProps> = (props) => {
                     onUpdatePriority={props.onUpdatePriority}
                     onPriorityContextMenu={props.onPriorityContextMenu}
                     getNextPriority={props.getNextPriority}
+                    onDateContextMenu={props.onDateContextMenu}
                 />
             )}
         </div>

@@ -41,23 +41,35 @@ SCHEDULED: 2025-12-25
 DEADLINE: 2025-12-31
 ```
 
-**Implementación actual:**
-- ✅ Parser extrae fechas con `extractTaskDates()`
-- ✅ `DateParser` class con soporte ISO y lenguaje natural
-- ✅ Visualización en `TaskItem.tsx` con `DateUtils.formatDateForDisplay()`
-- ⚠️ Lenguaje natural funciona pero necesita refinamiento (ambigüedades)
+**Implementación actual (✅ US-4.1 Completada - Fase 1):**
+- ✅ **DateParser refactorizado**: Sin delimitadores `<>`, soporta múltiples formatos
+  - DD/MM/YYYY (default), YYYY-MM-DD, MM-DD-YYYY
+  - Separadores flexibles: `/` o `-`
+  - Tiempo opcional: HH:mm
+  - Lenguaje natural con `chrono-node`: "tomorrow", "next Friday"
+- ✅ **DatePickerModal**: Calendario inline con Flatpickr
+  - Context menu en badges de fecha (click derecho)
+  - Shortcuts: Today / Tomorrow / Next Week / Clear
+  - Actualización automática de archivos Markdown
+- ✅ **Settings**: Campo `dateFormat` configurable (default: DD/MM/YYYY)
+- ✅ **Context menus**: Click derecho en badges del panel abre DatePicker
 
-**Mejoras propuestas:**
-- Validación estricta: mostrar error si formato inválido
-- Editor inline de fechas (date picker en el panel)
-- Soporte para rangos de fechas
-- Notificaciones configurable (ej: alertar 1 día antes de deadline)
+**Mejoras propuestas (Pendientes):**
+- ⚠️ **CRÍTICO**: Mejorar UI del DatePicker (Flatpickr inline muestra días en una sola línea - poco usable)
+  - Considerar alternativa: Modal con HTML5 `<input type="date">` o calendario custom
+  - O ajustar estilos de Flatpickr para layout correcto
+- ⏳ Context menu en editor (click derecho en líneas de fecha)
+- ⏳ Validación estricta: mostrar error visual si formato inválido
+- ⏳ Soporte para rangos de fechas
+- ⏳ Notificaciones configurables (alertar N días antes de deadline)
 
 **Archivos relacionados:**
-- [src/parser/date-parser.ts](../../src/parser/date-parser.ts) (Parsing de fechas)
+- [src/parser/date-parser.ts](../../src/parser/date-parser.ts) (Parsing flexible de fechas)
 - [src/parser/task-parser.ts](../../src/parser/task-parser.ts) (Extracción de fechas)
 - [src/view/date-utils.ts](../../src/view/date-utils.ts) (Formato de visualización)
-- [src/ui/view/TaskItem.tsx](../../src/ui/view/TaskItem.tsx) (Renderizado de fechas)
+- [src/ui/view/TaskItem.tsx](../../src/ui/view/TaskItem.tsx) (Renderizado + context menu)
+- [src/ui/DatePickerModal.ts](../../src/ui/DatePickerModal.ts) (Modal de selección)
+- [src/view/task-view.tsx](../../src/view/task-view.tsx) (Handler de date menus)
 
 ---
 

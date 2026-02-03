@@ -27,6 +27,8 @@ interface TaskGroupProps {
     onUpdatePriority: (task: Task, nextPriority: string | null) => void;
     onPriorityContextMenu: (task: Task, e: React.MouseEvent) => void;
     getNextPriority: (current: string | null) => string | null;
+    // US-4.1: Date management
+    onDateContextMenu: (task: Task, dateType: 'scheduled' | 'deadline', e: React.MouseEvent) => void;
 }
 
 export const TaskGroup: React.FC<TaskGroupProps> = (props) => {
@@ -87,6 +89,7 @@ export const TaskGroup: React.FC<TaskGroupProps> = (props) => {
                             onUpdatePriority={props.onUpdatePriority}
                             onPriorityContextMenu={props.onPriorityContextMenu}
                             getNextPriority={props.getNextPriority}
+                            onDateContextMenu={props.onDateContextMenu}
                         />
                     ))}
                 </ul>

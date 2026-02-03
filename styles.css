@@ -247,3 +247,120 @@
   padding-left: 20px;
   /* +8px from icon width roughly */
 }
+
+/* US-4.1: Date Picker Modal Styles */
+.date-picker-container {
+  margin: 16px 0;
+}
+
+.date-picker-input {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 12px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  background-color: var(--background-primary);
+  color: var(--text-normal);
+}
+
+.date-picker-shortcuts {
+  display: flex;
+  gap: 8px;
+  margin: 12px 0;
+  flex-wrap: wrap;
+}
+
+.date-picker-shortcut {
+  padding: 6px 12px;
+  border-radius: 4px;
+  background-color: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  color: var(--text-normal);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: var(--font-ui-smaller);
+}
+
+.date-picker-shortcut:hover {
+  background-color: var(--background-modifier-hover);
+  border-color: var(--interactive-accent);
+}
+
+.date-picker-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+/* Flatpickr theme integration with Obsidian */
+.flatpickr-calendar {
+  background-color: var(--background-primary) !important;
+  border-color: var(--background-modifier-border) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+.flatpickr-month {
+  background-color: var(--background-secondary) !important;
+  color: var(--text-normal) !important;
+}
+
+.flatpickr-current-month .flatpickr-monthDropdown-months {
+  background-color: var(--background-primary) !important;
+  color: var(--text-normal) !important;
+}
+
+.flatpickr-weekday {
+  color: var(--text-muted) !important;
+}
+
+.flatpickr-day {
+  color: var(--text-normal) !important;
+}
+
+.flatpickr-day:hover {
+  background-color: var(--background-modifier-hover) !important;
+  border-color: var(--background-modifier-border) !important;
+}
+
+.flatpickr-day.selected {
+  background-color: var(--interactive-accent) !important;
+  border-color: var(--interactive-accent) !important;
+  color: var(--text-on-accent) !important;
+}
+
+.flatpickr-day.today {
+  border-color: var(--interactive-accent) !important;
+}
+
+/* Fix SVG icon sizes in Flatpickr */
+.flatpickr-calendar svg {
+  width: 14px !important;
+  height: 14px !important;
+  max-width: 14px !important;
+  max-height: 14px !important;
+}
+
+.flatpickr-prev-month,
+.flatpickr-next-month {
+  width: 28px !important;
+  height: 28px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.flatpickr-prev-month svg,
+.flatpickr-next-month svg {
+  fill: var(--text-normal) !important;
+}
+
+.flatpickr-prev-month:hover,
+.flatpickr-next-month:hover {
+  background-color: var(--background-modifier-hover) !important;
+  border-radius: 4px !important;
+}
+
+.flatpickr-current-month {
+  padding: 4px 0 !important;
+}

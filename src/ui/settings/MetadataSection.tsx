@@ -127,8 +127,43 @@ export const MetadataSection: React.FC<MetadataSectionProps> = ({ plugin, settin
                 <strong>How to use Date Keywords:</strong>
                 <ul style={{ marginTop: '5px', paddingLeft: '20px' }}>
                     <li>Place date keyword and value on the line immediately following the task.</li>
-                    <li>Supported Date Format: &lt;YYYY-MM-DD&gt; (with optional Day/Time)</li>
+                    <li>Flexible Date Formats: DD/MM/YYYY, YYYY-MM-DD, MM-DD-YYYY (no delimiters required)</li>
+                    <li>Natural language also supported: "tomorrow", "next Friday"</li>
                 </ul>
+            </div>
+
+            {/* US-4.1: Date Format Selector */}
+            <div style={{ marginTop: '15px' }}>
+                <label style={{ display: 'block', marginBottom: '6px', fontWeight: 500 }}>
+                    Date Format Preference
+                </label>
+                <select
+                    value={plugin.settings.dateFormat}
+                    onChange={async (e) => {
+                        const newFormat = e.target.value as 'DD/MM/YYYY' | 'YYYY-MM-DD' | 'MM-DD-YYYY';
+                        await settingsService.updateSetting('dateFormat', newFormat);
+                        onSettingsChange();
+                    }}
+                    style={{
+                        width: '250px',
+                        padding: '6px',
+                        borderRadius: '4px',
+                        backgroundColor: 'var(--background-primary)',
+                        border: '1px solid var(--background-modifier-border)',
+                        color: 'var(--text-normal)'
+                    }}
+                >
+                    <option value="DD/MM/YYYY">DD/MM/YYYY (European)</option>
+                    <option value="YYYY-MM-DD">YYYY-MM-DD (ISO Standard)</option>
+                    <option value="MM-DD-YYYY">MM-DD-YYYY (American)</option>
+                </select>
+                <div style={{ marginTop: '6px', fontSize: '0.85em', color: 'var(--text-muted)' }}>
+                    Preview: <span style={{ fontFamily: 'var(--font-monospace)' }}>
+                        {plugin.settings.dateFormat === 'DD/MM/YYYY' && '25/12/2025'}
+                        {plugin.settings.dateFormat === 'YYYY-MM-DD' && '2025-12-25'}
+                        {plugin.settings.dateFormat === 'MM-DD-YYYY' && '12-25-2025'}
+                    </span>
+                </div>
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '30px' }}>

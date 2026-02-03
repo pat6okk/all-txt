@@ -5,6 +5,8 @@ import { DateUtils } from './date-utils';
 import { WorkflowService } from '../services/workflow-service';
 import { TaskStore } from '../services/task-store';
 import { SortMethod, GroupingMethod } from '../settings/defaults';
+import { DatePickerModal } from '../ui/DatePickerModal';
+import { DateParser } from '../parser/date-parser';
 
 // React Imports
 import * as React from 'react';
@@ -204,6 +206,7 @@ export class TodoView extends ItemView {
 
         // New Props
         onContextMenu={(t, e) => this.openStateMenuAtMouseEvent(t, e.nativeEvent)}
+        onDateContextMenu={(t, dateType, e) => this.openDateMenuAtMouseEvent(t, dateType, e.nativeEvent)}
         formatDate={(d, t) => DateUtils.formatDateForDisplay(d, t)}
         getDateClasses={(d, isDeadline) => this.getDateStatusClasses(d, isDeadline)}
 
@@ -448,5 +451,87 @@ export class TodoView extends ItemView {
     });
 
     menu.showAtMouseEvent(evt);
+  }
+
+  /**
+   * US-4.1: Open DatePicker modal for editing task dates
+   * @param task The task to edit
+   * @param dateType Whether to edit 'scheduled' or 'deadline'
+   * @param evt Mouse event for positioning
+   */
+  private openDateMenuAtMouseEvent(task: Task, dateType: 'scheduled' | 'deadline', evt: MouseEvent) {
+    const currentDate = dateType === 'scheduled' ? task.scheduledDate : task.deadlineDate;
+    const title = dateType === 'scheduled' ? 'Edit Scheduled Date' : 'Edit Deadline';
+    const dateFormat = this.taskStore.getSettings().dateFormat;
+
+    new DatePickerModal(
+      this.app,
+      title,
+      currentDate || null,
+      dateFormat,
+      async (newDate) => {
+        // Update the task's date in the file
+        await this.updateTaskDate(task, dateType, newDate);
+      }
+    ).open();
+  }
+
+  /**
+   * Update a task's date in the Markdown file
+   * @param task The task to update
+   * @param dateType Which date to update
+   * @param newDate The new date (or null to remove)
+   */
+  private async updateTaskDate(task: Task, dateType: 'scheduled' | 'deadline', newDate: Date | null) {
+    const file = this.app.vault.getAbstractFileByPath(task.path);
+    if (!(file instanceof TFile)) return;
+
+    const dateKeyword = dateType === 'scheduled'
+      ? (task.scheduledSymbol || this.taskStore.getSettings().scheduledKeywords[0] || 'SCHEDULED')
+      : (task.deadlineSymbol || this.taskStore.getSettings().deadlineKeywords[0] || 'DEADLINE');
+
+    const dateFormat = this.taskStore.getSettings().dateFormat;
+    const formattedDate = newDate ? DateParser.formatDate(newDate, dateFormat) : null;
+
+    // Read file content
+    const content = await this.app.vault.read(file);
+    const lines = content.split('\n');
+
+    // Find the date line (should be immediately after the task line)
+    const taskLine = task.line;
+    let dateLineIndex = -1;
+
+    // Look for existing date line within next few lines (respecting indentation)
+    for (let i = taskLine + 1; i < Math.min(taskLine + 5, lines.length); i++) {
+      const line = lines[i];
+      if (line.trim().startsWith(dateKeyword)) {
+        dateLineIndex = i;
+        break;
+      }
+    }
+
+    if (formattedDate) {
+      // Add or update the date line
+      const newDateLine = `${task.indent}${dateKeyword}: ${formattedDate}`;
+
+      if (dateLineIndex !== -1) {
+        // Update existing line
+        lines[dateLineIndex] = newDateLine;
+      } else {
+        // Insert new line after task
+        lines.splice(taskLine + 1, 0, newDateLine);
+      }
+    } else {
+      // Remove the date line if it exists
+      if (dateLineIndex !== -1) {
+        lines.splice(dateLineIndex, 1);
+      }
+    }
+
+    // Write back to file
+    const newContent = lines.join('\n');
+    await this.app.vault.modify(file, newContent);
+
+    // The vault will trigger a file change event, which will refresh the view
   }
 }

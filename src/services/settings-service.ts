@@ -229,4 +229,14 @@ export class SettingsService {
         });
     }
 
+    /**
+     * Generic setting updater for simple fields
+     * @param key Setting key to update
+     * @param value New value
+     */
+    async updateSetting<K extends keyof TodoTrackerSettings>(key: K, value: TodoTrackerSettings[K]) {
+        this.settings[key] = value;
+        await this.save();
+    }
+
 }

@@ -101,8 +101,11 @@ Todo es configurable en Settings → FLOW.txt:
 
 - **Define tu vocabulario**: Añade las palabras clave que quieras (estados, colores, tooltips)
 - **Construye workflows**: Conecta estados con reglas de transición personalizadas
-- **Configura prioridades**: `[P1]`, `[#A]`, o el sistema que te funcione
-- **Añade fechas**: `PLAN: <2025-12-15>` o `DUE: <2025-12-31>`
+- **Configura prioridades**: `[P1]`, `[#A]`, o tokens personalizados como `#Urgente`
+- **Añade fechas**: `SCHEDULED: 25/12/2025` o `DEADLINE: 2025-12-31`
+  - Formatos flexibles: `DD/MM/YYYY`, `YYYY-MM-DD`, o `MM-DD-YYYY`
+  - Lenguaje natural: "mañana", "next Friday" (en inglés por ahora)
+  - **Date Picker**: Click derecho en cualquier fecha o badge para abrir el calendario nativo.
 
 Las palabras clave por defecto funcionan desde el inicio. Personaliza cuando estés listo.
 

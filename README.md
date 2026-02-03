@@ -101,8 +101,11 @@ Everything is configurable in Settings → FLOW.txt:
 
 - **Define your vocabulary**: Add any keywords you want (states, colors, tooltips)
 - **Build workflows**: Connect states with custom transition rules
-- **Set priorities**: `P1`, `A`, or whatever system works for you
-- **Add dates**: `PLAN: 2025-12-15` or `DUE: 2025-12-31`
+- **Set priorities**: `P1`, `A`, or custom tokens like `#High`
+- **Add dates**: `SCHEDULED: 2025-12-15` or `DEADLINE: 2025-12-31`
+  - Flexible formats: `YYYY-MM-DD`, `DD/MM/YYYY`, or `MM-DD-YYYY`
+  - Natural language: "tomorrow", "next Friday"
+  - **Date Picker**: Right-click on any date or badge to open the calendar UI
 
 Default keywords work out of the box. Customize when you're ready.
 

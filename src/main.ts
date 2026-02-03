@@ -4,7 +4,9 @@ import { TodoView, TASK_VIEW_ICON } from "./view/task-view";
 import { TodoTrackerSettingTab } from "./settings/settings";
 import { TodoTrackerSettings, DEFAULT_SETTINGS } from "./settings/defaults";
 import { keywordHighlighter } from './editor/keyword-highlighter';
+import { keywordContextMenu } from './editor/keyword-context-menu';
 import { WorkflowService } from './services/workflow-service';
+import { TaskEditor } from './view/task-editor';
 import { TaskStore } from './services/task-store';
 import { SettingsService } from './services/settings-service';
 
@@ -15,6 +17,7 @@ export default class TodoInlinePlugin extends Plugin {
   private workflowService: WorkflowService;
   public taskStore: TaskStore;
   public settingsService: SettingsService;
+  private taskEditor: TaskEditor;
 
   // Obsidian lifecycle method called when the plugin is loaded.
   async onload() {
@@ -22,6 +25,7 @@ export default class TodoInlinePlugin extends Plugin {
     this.settingsService = new SettingsService(this);
     this.workflowService = new WorkflowService(this.settings);
     this.taskStore = new TaskStore(this.app, this.settings);
+    this.taskEditor = new TaskEditor(this.app);
 
     // Register the custom view type
     this.registerView(
@@ -59,6 +63,9 @@ export default class TodoInlinePlugin extends Plugin {
 
     // Register editor extension for keyword highlighting
     this.registerEditorExtension(keywordHighlighter(() => this.settings));
+
+    // US-3.4: Register editor extension for keyword context menu
+    this.registerEditorExtension(keywordContextMenu(this.workflowService, this.taskEditor));
 
     // Add command to show tasks
     this.addCommand({

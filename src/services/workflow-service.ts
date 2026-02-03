@@ -37,30 +37,61 @@ export class WorkflowService {
 
     /**
      * Determines the next state for a task based on the configured workflow.
+     * 
+     * US-3.2: Global Return Logic
+     * - When a workflow reaches its final state, instead of cycling to its own start,
+     *   it looks for the "global return" defined by the FIRST workflow that shares that end state.
+     * - This allows secondary workflows to inherit the return behavior of the primary workflow.
+     * 
+     * Example:
+     * - Workflow 1: TODO → DOING → DONE → (back to TODO)
+     * - Workflow 2: LATER → DOING → DONE → (inherits: back to TODO, not LATER)
+     * 
      * Logic:
-     * - If in PENDING -> go to first ACTIVE state (or DONE if no active).
-     * - If in ACTIVE -> go to first DONE state.
-     * - If in DONE -> go to first PENDING state (cycle).
-     * - If unknown -> go to DONE.
+     * 1. Find the workflow containing the current state
+     * 2. If at the end of the workflow:
+     *    a. Look for the FIRST workflow that also ends with the same state
+     *    b. Return to the START of that first workflow
+     * 3. Otherwise, advance normally within the current workflow
      */
     getNextState(currentState: string): string {
-        // 1. Check custom workflows first
         const workflows = this.settings.workflows || [];
-        for (const flow of workflows) {
+
+        // 1. Find which workflow contains the current state
+        for (let i = 0; i < workflows.length; i++) {
+            const flow = workflows[i];
             const index = flow.indexOf(currentState);
+
             if (index !== -1) {
-                // Found the state in a workflow!
-                // Cycle to next state (loop back to start if at end)
-                const nextIndex = (index + 1) % flow.length;
-                return flow[nextIndex];
+                // Found the state in this workflow!
+
+                // 2. Check if we're at the end of this workflow
+                if (index === flow.length - 1) {
+                    // We're at the final state of this workflow
+                    const finalState = flow[index];
+
+                    // 3. Find the FIRST workflow that also ends with this state
+                    // (This defines the "global return" for this end state)
+                    const primaryWorkflow = workflows.find(w =>
+                        w.length > 0 && w[w.length - 1] === finalState
+                    );
+
+                    if (primaryWorkflow && primaryWorkflow.length > 0) {
+                        // Return to the START of the primary workflow
+                        return primaryWorkflow[0];
+                    }
+
+                    // Fallback: if no primary workflow found, cycle to own start
+                    return flow[0];
+                } else {
+                    // Not at the end, advance normally
+                    return flow[index + 1];
+                }
             }
         }
 
-        // 2. Fallback: Parsing/Semantic logic (Legacy/Safety net)
-        // If the state isn't in any configured workflow, we fall back to the semantic lists
-        // to determine if it's "Pending" or "Active" and move it forward linearly.
-        // However, specifically for semantic fallback, we'll just cycle linearly through All Keywords
-        // to avoid getting stuck, but this should rarely happen if workflows are set up correctly.
+        // 2. Fallback: State not found in any workflow
+        // Use semantic logic (legacy/safety net)
         const allKeywords = this.getAllKeywords();
         const cleanKeywords = allKeywords.filter(k => k && k.trim().length > 0);
 

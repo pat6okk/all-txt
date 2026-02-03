@@ -69,13 +69,13 @@ DEADLINE: 2025-12-31
 **NOTA IMPORTANTE:** Debemos analizar si esto da valor, ya que puede ser redundante tener dos o más sistemas de prioridad que actúen a la vez.
 
 **Ejemplos de ANTI-PATTERNS a evitar:**
-```markdown
-❌ TODO P1 URGENTE cocinar huevos  (NO TIENE SENTIDO)
-❌ TODO [P1] [#A] Tarea compleja   (Confuso, ¿cuál tiene precedencia?)
 
-✅ TODO [P1] Tarea crítica          (Un sistema de prioridad)
-✅ TODO [URGENTE] Tarea crítica     (Un sistema de prioridad)
-```
+❌ TODO P1 URGENTE cocinar huevos  (NO TIENE SENTIDO)
+❌ TODO P1 #A Tarea compleja   (Confuso, ¿cuál tiene precedencia?)
+
+✅ TODO P1 Tarea crítica          (Un sistema de prioridad)
+✅ TODO URGENTE Tarea crítica     (Un sistema de prioridad)
+
 
 **RECOMENDACIÓN:** Usar UN SOLO sistema de prioridad. Opciones:
 - Técnica: P1, P2, P3 (enfoque ágil)
@@ -85,11 +85,11 @@ DEADLINE: 2025-12-31
 **Decisión pendiente:** ¿Implementamos multi-cola o recomendamos single-system?
 
 **Historia original:**
-Como usuario con diferentes tipos de urgencia (impacto vs. esfuerzo), quiero usar múltiples sistemas de prioridad simultáneos (ej: `[P1]` y `[#A]`), para clasificar mis items según diferentes dimensiones.
+Como usuario con diferentes tipos de urgencia (impacto vs. esfuerzo), quiero usar múltiples sistemas de prioridad simultáneos (ej: `P1` y `A`), para clasificar mis items según diferentes dimensiones.
 
 **Criterios de Aceptación (si decidimos mantener multi-cola):**
 - ✅ Configuración de múltiples grupos de prioridad independientes (`priorityQueues`)
-- ✅ Tokens personalizables por grupo (ej: P1/P2/P3, #A/#B/#C, URGENT/NORMAL/LOW)
+- ✅ Tokens personalizables por grupo (ej: P1/P2/P3, A/B/C, URGENT/NORMAL/LOW)
 - ✅ Detección del **primer token encontrado** en el texto del item
 - ✅ Badge visual en el panel con color según nivel
 - ✅ Click en badge cicla al siguiente en su grupo
@@ -100,10 +100,10 @@ Como usuario con diferentes tipos de urgencia (impacto vs. esfuerzo), quiero usa
 
 Ejemplo:
 ```markdown
-TODO [P1] Tarea urgente [#C] con múltiples prioridades
+TODO P1 Tarea urgente C con múltiples prioridades
 ```
 - Se detecta: `P1` (primer match)
-- Se ignora: `#C`
+- Se ignora: `C`
 
 Lógica:
 - Regex busca todos los tokens aplanados de `priorityQueues`

@@ -53,10 +53,11 @@ DEADLINE: 2025-12-31
   - Context menu en badges de fecha (click derecho)
   - Actualización automática de archivos Markdown
 - ✅ **Settings**: Campo `dateFormat` configurable (default: DD/MM/YYYY)
-- ✅ **Context menus**: Click derecho en badges del panel abre DatePicker
+- ✅ **Context menus**: 
+  - Click derecho en badges del panel abre DatePicker
+  - **Click derecho en líneas de fecha en el editor** abre DatePicker (US-4.1 Fase 2)
 
 **Mejoras propuestas (Pendientes):**
-- ⏳ Context menu en editor (click derecho en líneas de fecha)
 - ⏳ Validación estricta: mostrar error visual si formato inválido
 - ⏳ Soporte para rangos de fechas
 - ⏳ Notificaciones configurables (alertar N días antes de deadline)

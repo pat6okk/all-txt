@@ -5,6 +5,7 @@ import { TodoTrackerSettingTab } from "./settings/settings";
 import { TodoTrackerSettings, DEFAULT_SETTINGS } from "./settings/defaults";
 import { keywordHighlighter } from './editor/keyword-highlighter';
 import { keywordContextMenu } from './editor/keyword-context-menu';
+import { dateContextMenu } from './editor/date-context-menu';
 import { WorkflowService } from './services/workflow-service';
 import { TaskEditor } from './view/task-editor';
 import { TaskStore } from './services/task-store';
@@ -66,6 +67,9 @@ export default class TodoInlinePlugin extends Plugin {
 
     // US-3.4: Register editor extension for keyword context menu
     this.registerEditorExtension(keywordContextMenu(this.workflowService, this.taskEditor));
+
+    // US-4.1 Phase 2: Register editor extension for date context menu
+    this.registerEditorExtension(dateContextMenu(this.app, this.settingsService));
 
     // Add command to show tasks
     this.addCommand({

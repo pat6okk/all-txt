@@ -1,10 +1,15 @@
-# ADR-001: Cambio a Strict Headers y Block Delimiters
+# ADR-001: Cambio a Strict Headers y Bloques Organicos
 
 **Fecha:** 2026-02-02  
-**Estado:** Aceptado  
+**Estado:** Aceptado (actualizado por PRJ-002 el 2026-02-09)  
 **Decisores:** Pat (Product Owner), Antigravity (Tech Lead)
 
 ---
+
+## Nota de vigencia
+
+La version inicial de este ADR hablaba de delimitadores explicitos (`---`).  
+Desde PRJ-002, la regla canonica en runtime es **bloque organico por indentacion** (sin delimitadores artificiales).
 
 ## Contexto
 
@@ -28,7 +33,7 @@ El sistema original de detección de keywords (US-1.1 y US-1.2 v1.0) permitía d
 
 ## Decisión
 
-Adoptar un **sistema de "Strict Headers" con "Block Delimiters"**:
+Adoptar un **sistema de "Strict Headers" con bloque organico**:
 
 ### US-1.1: Strict Header Detection
 - Las keywords **solo** se detectan al inicio de línea (o con indentación de espacios).
@@ -36,10 +41,11 @@ Adoptar un **sistema de "Strict Headers" con "Block Delimiters"**:
 - Regex simplificado: `^(\s*)(KEYWORD)\s+(.*)`
 
 ### US-1.2: Block Content Capture
-- El parser captura todo el contenido desde un Header válido hasta:
-  - Un delimitador explícito `---` (tres guiones), O
-  - La siguiente keyword válida al mismo nivel de indentación, O
-  - El final del archivo.
+- El parser captura contenido desde un Header valido cuando las lineas siguientes tienen mayor indentacion que el header padre.
+- El bloque termina por:
+  - dedent (indentacion igual o menor al header), O
+  - siguiente keyword valida al mismo nivel o menor, O
+  - fin del archivo.
 - Dentro del bloque se capturan:
   - Subtareas (checkboxes: `- [ ]`)
   - Metadatos (`DUE:`, `PRIORITY:`)
@@ -109,13 +115,12 @@ Permitir al usuario elegir entre "Modo Flexible" (listas, etc.) y "Modo Estricto
 - Dificulta el testing (doble superficie).
 - Confunde la identidad del producto.
 
-### Alternativa 3: Bloque Jerárquico sin Delimitadores
-Usar solo indentación para delimitar bloques.
+### Alternativa 3: Bloque Jerarquico sin Delimitadores
+Usar solo indentacion para delimitar bloques.
 
-**Descartado porque:**
-- Ambiguo cuando hay texto en diferentes niveles de indentación.
-- Markdown permite indentaciones inconsistentes.
-- El delimitador `---` es explícito y ya está en la sintaxis de Markdown (separador horizontal).
+**Estado actual de esta alternativa:**
+- Reevaluada y **adoptada** en PRJ-002.
+- Se reemplazo el enfoque con delimitador explicito por cierre organico por indentacion.
 
 ---
 
@@ -124,12 +129,11 @@ Usar solo indentación para delimitar bloques.
 El nuevo sistema sigue siendo **100% Markdown válido**:
 
 ```markdown
-TODO Refactorizar módulo X
- - [ ] Actualizar tests
- - [ ] Documentar API
-Se requiere coordinación con el equipo.
+TODO Refactorizar modulo X
+    - [ ] Actualizar tests
+    - [ ] Documentar API
+    Se requiere coordinacion con el equipo.
 DUE: 2026-02-10
----
 ```
 
 Este bloque es legible en cualquier editor Markdown. El plugin añade "superpoderes" al interpretarlo.
@@ -148,10 +152,9 @@ Validaremos esta decisión en la v1.1 con:
 
 ## Referencias
 
-- [US-1.1: Strict Header](../epics/01-CAPTURE_AND_DETECTION.md#us-11-strict-header-detección-estricta)
-- [US-1.2: Block Content](../epics/01-CAPTURE_AND_DETECTION.md#us-12-captura-de-bloque-y-contenido-rico)
-- [US-1.5: Context Menu](../epics/01-CAPTURE_AND_DETECTION.md#us-15-conversión-rápida-desde-menú-contextual)
-- [Implementation Plan](./EPIC_1_STRICT_BLOCKS.md)
+- [Epica 1 - Captura y Deteccion](../epics/01-CAPTURE_AND_DETECTION.md)
+- [Epica 2 - Visualizacion y Organizacion](../epics/02-VISUALIZATION_AND_ORGANIZATION.md)
+- [Anexo historico 01.5](../epics/01.5-STRICT_BLOCKS.md)
 
 ---
 

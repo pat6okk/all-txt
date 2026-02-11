@@ -9,6 +9,7 @@ interface TodoListProps {
     onOpenTask: (task: Task, e: React.MouseEvent) => void;
     onContextMenu: (task: Task, e: React.MouseEvent) => void;
     getKeywordColor: (k: string) => string;
+    getLabelColor: (label: string) => string;
     getNextState: (c: string) => string;
     getContrastColor: (hex: string) => string;
     formatDate: (date: Date, includeTime?: boolean) => string;

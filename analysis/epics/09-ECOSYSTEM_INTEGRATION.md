@@ -1,4 +1,4 @@
-# Épica 8: Integración con Ecosistema
+# Épica 9: Integración con Ecosistema
 
 **Descripción:** Cómo el plugin se integra con otros plugins, sistemas y plataformas.
 
@@ -7,7 +7,7 @@
 
 ---
 
-## US-8.1: Compatibilidad con plugins populares
+## US-9.1: Compatibilidad con plugins populares
 
 **Componentes:** [ENGINE] [EDITOR]  
 **Estado:** 🟡 Parcial (No testeado exhaustivamente)
@@ -16,7 +16,7 @@
 Como usuario de Dataview, Tasks u otros plugins, quiero que FLOW.txt coexista sin conflictos, para combinar funcionalidades sin errores.
 
 **Criterios de Aceptación:**
-- ⚠️ No interfiere con sintaxis de Dataview (`TASK`, `DUE`) - necesita testing
+- ⚠️ No interfiere con sintaxis de Dataview/Tasks (queries y metadata `PLAN`/`DUE`) - necesita testing
 - ⚠️ No sobrescribe atajos de teclado de otros plugins - necesita validación
 - ❌ Documentación de posibles conflictos conocidos
 - ❌ Testing de integración con plugins top 10 más populares
@@ -29,7 +29,7 @@ Como usuario de Dataview, Tasks u otros plugins, quiero que FLOW.txt coexista si
 5. **Kanban** - Boards estilo Trello
 
 **Conflictos potenciales conocidos:**
-- Si usuario tiene keyword `TASK` y usa Dataview, puede haber confusión
+- Si usuario define keyword personalizada `TASK` y usa Dataview, puede haber confusión semántica
 - Resaltado en editor puede conflictuar con syntax highlighting de otros plugins
 - Hotkeys si se implementan en el futuro
 
@@ -44,7 +44,7 @@ Como usuario de Dataview, Tasks u otros plugins, quiero que FLOW.txt coexista si
 
 ---
 
-## US-8.2: Exportación a formatos estándar
+## US-9.2: Exportación a formatos estándar
 
 **Componentes:** [VIEW] [ENGINE]  
 **Estado:** 🔵 Futuro (Requiere rediseño de criterios)
@@ -80,7 +80,7 @@ Ver especificación completa en issue correspondiente cuando se implemente v2.0.
 
 ---
 
-## US-8.3: API para integración con IA
+## US-9.3: API para integración con IA
 
 **Componentes:** [ENGINE] [MULTI]  
 **Estado:** 🔵 Futuro (Visionário - Requiere diseño completo)
@@ -104,7 +104,7 @@ Como usuario de asistentes IA (ChatGPT, Claude), quiero que mi asistente pueda l
 
 ---
 
-## US-8.4: Sincronización móvil (Obsidian Mobile)
+## US-9.4: Sincronización móvil (Obsidian Mobile)
 
 **Componentes:** [VIEW] [EDITOR] [CONFIG]  
 **Estado:** ⚠️ En revisión (No testeado exhaustivamente en móvil)
@@ -153,14 +153,14 @@ Como usuario de Obsidian en móvil, quiero que el plugin funcione con las mismas
 
 ---
 
-## Resumen de Épica 8
+## Resumen de Épica 9
 
 | US | Descripción | Estado | Versión |
 |----|-------------|--------|---------|
-| US-8.1 | Compatibilidad plugins | 🟡 | v1.x |
-| US-8.2 | Exportación | 🔵 | v2.0 |
-| US-8.3 | API para IA | 🔵 | v2.0+ |
-| US-8.4 | Sincronización móvil | ⚠️ | v1.x |
+| US-9.1 | Compatibilidad plugins | 🟡 | v1.x |
+| US-9.2 | Exportación | 🔵 | v2.0 |
+| US-9.3 | API para IA | 🔵 | v2.0+ |
+| US-9.4 | Sincronización móvil | ⚠️ | v1.x |
 
 **Cobertura de componentes:**
 - **[ENGINE]** - 2/4 utilizadas
@@ -169,8 +169,8 @@ Como usuario de Obsidian en móvil, quiero que el plugin funcione con las mismas
 - **[FUTURO]** - 2/4 visión futura
 
 **Acciones requeridas:**
-1. Crear matriz de testing para US-8.1 (plugins populares)
+1. Crear matriz de testing para US-9.1 (plugins populares)
 2. Documentar conflictos conocidos en FAQ
-3. Planificar roadmap de IA (US-8.3) para v2.0
-4. Testing móvil exhaustivo para US-8.4 (próximo sprint)
-5. Evaluar Exportación (US-8.2) feedback usuario
+3. Planificar roadmap de IA (US-9.3) para v2.0
+4. Testing móvil exhaustivo para US-9.4 (próximo sprint)
+5. Evaluar Exportación (US-9.2) feedback usuario

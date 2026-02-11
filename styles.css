@@ -333,3 +333,13 @@
   padding-top: 16px;
   border-top: 1px solid var(--background-modifier-border);
 }
+
+.flowtxt-label-suggest-title {
+  font-weight: 600;
+}
+
+.flowtxt-label-suggest-detail {
+  margin-top: 2px;
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+}

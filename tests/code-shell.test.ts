@@ -7,7 +7,6 @@ describe('Task parsing within Shell file comments in code blocks', () => {
 
   beforeEach(() => {
     settings = {
-      refreshInterval: 60,
       includeCalloutBlocks: true,
       includeCodeBlocks: true,
       languageCommentSupport: {

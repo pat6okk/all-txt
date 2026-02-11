@@ -104,11 +104,11 @@ Finished (Completados):
 ```markdown
 # ✅ RECOMENDADO: Línea siguiente (más legible)
 TODO Completar propuesta
-SCHEDULED: 2025-12-20
-DEADLINE: 2025-12-25
+PLAN: 2025-12-20
+DUE: 2025-12-25
 
 # ❌ NO RECOMENDADO: Misma línea (menos legible, especialmente móvil)
-TODO Completar propuesta SCHEDULED: 2025-12-20 DEADLINE: 2025-12-25
+TODO Completar propuesta PLAN: 2025-12-20 DUE: 2025-12-25
 ```
 
 **Razones:**
@@ -162,19 +162,19 @@ IDEA → DRAFT → EDIT → PUBLISH → DONE
 | Tamaño | Síntoma | Solución |
 |--------|---------|----------|
 | < 500 archivos | Rápido | Configuración default OK |
-| 500-2000 archivos | Lag ocasional | Aumentar `refreshInterval` a 120s |
-| 2000-5000 archivos | Lag notable | Usar 180-300s + filtro "active file" |
-| > 5000 archivos | Lag severo | Considerar dividir bóveda o modo "Manual" (v1.2) |
+| 500-2000 archivos | Lag ocasional | Usar filtro "Active File" y evitar vistas muy cargadas |
+| 2000-5000 archivos | Lag notable | Reducir contexto visible + dividir archivos grandes |
+| > 5000 archivos | Lag severo | Dividir bóveda/proyectos y minimizar archivos monolíticos |
 
 ### Optimizaciones
 
-#### 1. Aumentar Intervalo de Refresh
-**Settings** → Refresh Interval → aumentar de 60s a 120s o más
-- Menos escaneos = menos CPU
-- Trade-off: Items se actualizan más lentamente
+#### 1. Modelo reactivo (sin refresh interval configurable)
+FLOW.txt actualiza por eventos del vault (no por polling configurable).
+- Cambios en archivos disparan actualización automática.
+- No necesitas ajustar intervalos para "forzar rendimiento".
 
 #### 2. Usar Filtro "Active File"
-**En Todo Inline panel** → Click toggle "Active File"
+**En el panel FLOW.txt** → Click toggle "Active File"
 - Muestra solo items del archivo actual
 - Mucho más rápido
 - Ideal para trabajo enfocado
@@ -240,7 +240,7 @@ Crea un documento compartido en tu bóveda (ej: `Standards/FLOW.txt.md`):
 
 ✅ Correcto:
 - TODO P1 Revisar seguridad
-  DEADLINE: 2025-12-20
+  DUE: 2025-12-20
 
 ❌ Incorrecto:
 - TODO URGENT Revisar seguridad (doble prioridad)
@@ -262,7 +262,7 @@ Como archivos son plain Markdown:
 ### Problema: Items no aparecen en panel
 
 **Checklist:**
-1. ¿Está el panel visible? (Ribbon icon → Todo Inline)
+1. ¿Está el panel visible? (Ribbon icon → FLOW.txt)
 2. ¿El keyword está en la configuración? (Settings → Vocabulary)
 3. ¿El keyword está exactamente después del prefijo?
    ```markdown
@@ -282,9 +282,9 @@ Como archivos son plain Markdown:
 ### Problema: Lag en editor
 
 **Checklist:**
-1. Aumentar `refreshInterval` (Settings)
-2. Usar filtro "Active File"
-3. Si archivo > 5000 líneas, considerar dividir
+1. Usar filtro "Active File"
+2. Si archivo > 5000 líneas, considerar dividir
+3. Revisar cantidad de items visibles simultáneamente
 4. Desactivar highlighter si muy lento
 
 ---
@@ -298,7 +298,7 @@ Como archivos son plain Markdown:
 
 # FLOW.txt format
 TODO Fix bug #234
-DEADLINE: 2025-12-20
+DUE: 2025-12-20
 ```
 
 **Ventajas:** Workflows personalizables, prioridades, sintaxis más limpia.

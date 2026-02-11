@@ -10,8 +10,8 @@ describe('US-1.1: Strict Header Detection', () => {
             todoKeywords: ['TODO'],
             doingKeywords: ['DOING'],
             doneKeywords: ['DONE'],
-            scheduledKeywords: ['SCHEDULED'],
-            deadlineKeywords: ['DEADLINE'],
+            scheduledKeywords: ['PLAN'],
+            deadlineKeywords: ['DUE'],
             priorityKeywords: [], // Deprecated
             keywordColors: {},
             keywordDescriptions: {},
@@ -181,13 +181,13 @@ TODO Tarea 2`;
         });
 
         it('detects task with scheduled date', () => {
-            // The keyword 'SCHEDULED' is configured in beforeEach
-            const content = 'TODO Task with date\nSCHEDULED: 2026-02-15';
+            // The keyword 'PLAN' is configured in beforeEach
+            const content = 'TODO Task with date\nPLAN: 2026-02-15';
             const tasks = parser.parseFile(content, 'test.md');
 
             expect(tasks).toHaveLength(1);
             expect(tasks[0].state).toBe('TODO');
-            // Note: If this fails, verify scheduledKeywords includes 'SCHEDULED'
+            // Note: If this fails, verify scheduledKeywords includes 'PLAN'
             if (tasks[0].scheduledDate === null) {
                 console.log('scheduledKeywords:', settings.scheduledKeywords);
                 console.log('Task:', tasks[0]);
@@ -197,7 +197,7 @@ TODO Tarea 2`;
 
         it('detects task with both dates', () => {
             // IMPORTANT: Date keywords need exact indent match with task
-            const content = 'TODO Important task\nSCHEDULED: 2026-02-15\nDEADLINE: 2026-02-20';
+            const content = 'TODO Important task\nPLAN: 2026-02-15\nDUE: 2026-02-20';
             const tasks = parser.parseFile(content, 'test.md');
 
             expect(tasks).toHaveLength(1);

@@ -5,7 +5,7 @@ Este documento consolida análisis de factibilidad y propuestas técnicas para f
 ## 1. Sistema de Etiquetas (Labels) Multi-dimensionales
 
 > **📋 Estado:** En planificación activa  
-> **📄 Especificación:** [Épica 5: Labels System](./epics/05-LABELS_SYSTEM.md)
+> **📄 Especificación:** [Épica 6: Labels System](./epics/06-LABELS_SYSTEM.md)
 
 ### Contexto
 Sistema de clasificación complementario a las prioridades que permite múltiples etiquetas (`@Trabajo`, `@Urgente`, `@EquipoA`) por tarea para categorización, filtrado y agrupación.
@@ -27,7 +27,7 @@ TODO ALTA Revisar código @Backend @Dev
 3. **Fase 3 - Filtrado**: Filtros por labels en panel
 4. **Fase 4 - Settings**: Configuración de labels definidos
 
-Ver especificación completa en [Épica 5](./epics/05-LABELS_SYSTEM.md).
+Ver especificación completa en [Épica 6](./epics/06-LABELS_SYSTEM.md).
 
 ---
 
@@ -68,4 +68,4 @@ Visualizar el flujo de trabajo (`TODO -> DOING -> DONE`) como un tablero de colu
 ## 3. Integración de Calendario (Calendar View)
 
 *Pendiente de análisis detallado.*
-Potencial para visualizar tareas con fecha (`SCHEDULED`, `DEADLINE`) en una vista de calendario mensual/semanal.
+Potencial para visualizar tareas con fecha (`PLAN`, `DUE`) en una vista de calendario mensual/semanal.

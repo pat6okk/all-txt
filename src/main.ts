@@ -1,4 +1,4 @@
-import { Plugin, TFile, TAbstractFile, WorkspaceLeaf, Editor } from 'obsidian';
+import { Plugin, TFile, TAbstractFile, WorkspaceLeaf, Editor, Menu } from 'obsidian';
 import { Task, TaskViewMode } from './task';
 import { TodoView, TASK_VIEW_ICON } from "./view/task-view";
 import { TodoTrackerSettingTab } from "./settings/settings";
@@ -7,11 +7,20 @@ import { keywordHighlighter } from './editor/keyword-highlighter';
 import { keywordContextMenu } from './editor/keyword-context-menu';
 import { priorityContextMenu } from './editor/priority-context-menu';
 import { labelContextMenu } from './editor/label-context-menu';
+import { LabelEditorSuggest } from './editor/label-editor-suggest';
 import { dateContextMenu } from './editor/date-context-menu';
+import { formatSelectionAsFlowBlock } from './editor/flow-block-formatter';
 import { WorkflowService } from './services/workflow-service';
 import { TaskEditor } from './view/task-editor';
 import { TaskStore } from './services/task-store';
 import { SettingsService } from './services/settings-service';
+import {
+  collectInlineLabels,
+  dedupeLabelsCaseInsensitive,
+  mergeLabelsWithDefinedOrder,
+  normalizeLabelKey,
+  toValidLabelDisplay,
+} from './labels/label-utils';
 
 export default class FlowTxtPlugin extends Plugin {
   settings: TodoTrackerSettings;
@@ -76,6 +85,11 @@ export default class FlowTxtPlugin extends Plugin {
     // Épica 5: Register editor extension for label context menu
     this.registerEditorExtension(labelContextMenu(this.settingsService));
 
+    // PRJ-007: Register @label autocomplete with scoped suggestions
+    this.registerEditorSuggest(
+      new LabelEditorSuggest(this.app, this.settingsService, () => this.taskStore.getTasks())
+    );
+
     // US-4.1 Phase 2: Register editor extension for date context menu
     this.registerEditorExtension(dateContextMenu(this.app, this.settingsService));
 
@@ -110,21 +124,28 @@ export default class FlowTxtPlugin extends Plugin {
         const line = editor.getLine(editor.getCursor().line).trim();
         if (!selection && !line) return;
 
+        // PRJ-007: Insert labels from current note (default) or full vault list
+        this.addInsertLabelMenu(menu, editor);
+
         // Use a single menu item that opens a submenu with all Start States
         menu.addItem((item) => {
           item
-            .setTitle('Convert to FLOW block...')
+            .setTitle('Convert to flow block...')
             .setIcon('SheetsInCircuit')
             .setSection('action');
 
-          // @ts-ignore - The Obsidian API supports submenus in recent versions via this pattern
-          const subMenu = item.setSubmenu ? item.setSubmenu() : null;
+          const subMenu = this.getSubmenuFromMenuItem(item);
 
-          const keywords = this.settings.todoKeywords || ['TODO'];
+          const workflowStarts = (this.settings.workflows || [])
+            .map((workflow) => workflow[0])
+            .filter((keyword): keyword is string => Boolean(keyword));
+          const configuredStarts = this.settings.todoKeywords || [];
+          const keywords = Array.from(new Set([...workflowStarts, ...configuredStarts]));
+          const startKeywords = keywords.length > 0 ? keywords : ['TODO'];
 
-          keywords.forEach((kw) => {
+          startKeywords.forEach((kw) => {
             if (subMenu) {
-              subMenu.addItem((subItem: any) => {
+              subMenu.addItem((subItem) => {
                 subItem
                   .setTitle(`${kw} Block`)
                   .onClick(() => this.convertSelectedToFlow(editor, kw));
@@ -145,6 +166,104 @@ export default class FlowTxtPlugin extends Plugin {
     );
   }
 
+  private addInsertLabelMenu(menu: Menu, editor: Editor) {
+    const definedLabels = this.settingsService.getOrderedDefinedLabels();
+    const noteLabels = mergeLabelsWithDefinedOrder(definedLabels, collectInlineLabels(editor.getValue()));
+    const vaultLabels = mergeLabelsWithDefinedOrder(
+      definedLabels,
+      this.taskStore.getTasks().flatMap(task => task.labels || []),
+    );
+
+    if (noteLabels.length === 0 && vaultLabels.length === 0) {
+      return;
+    }
+
+    menu.addItem((item) => {
+      item
+        .setTitle('Insert label...')
+        .setIcon('tag')
+        .setSection('action');
+
+      let subMenu: Menu | null = null;
+      subMenu = this.getSubmenuFromMenuItem(item);
+
+      if (!subMenu) {
+        noteLabels.slice(0, 10).forEach((label) => {
+          menu.addItem((fallbackItem) => {
+            fallbackItem
+              .setTitle(`Insert @${label}`)
+              .setIcon('tag')
+              .setSection('action')
+              .onClick(() => this.insertLabelAtCursor(editor, label));
+          });
+        });
+        return;
+      }
+      const menuRef = subMenu;
+
+      menuRef.addItem((headerItem) => {
+        headerItem.setTitle('Current note labels').setDisabled(true);
+      });
+
+      if (noteLabels.length === 0) {
+        menuRef.addItem((emptyItem) => {
+          emptyItem.setTitle('No labels in current note').setDisabled(true);
+        });
+      } else {
+        noteLabels.slice(0, 20).forEach((label) => {
+          menuRef.addItem((labelItem) => {
+            labelItem
+              .setTitle(`@${label}`)
+              .setIcon('tag')
+              .onClick(() => this.insertLabelAtCursor(editor, label));
+          });
+        });
+      }
+
+      menuRef.addSeparator();
+      menuRef.addItem((headerItem) => {
+        headerItem.setTitle('All vault labels').setDisabled(true);
+      });
+
+      if (vaultLabels.length === 0) {
+        menuRef.addItem((emptyItem) => {
+          emptyItem.setTitle('No labels found in vault').setDisabled(true);
+        });
+      } else {
+        vaultLabels.slice(0, 60).forEach((label) => {
+          menuRef.addItem((labelItem) => {
+            labelItem
+              .setTitle(`@${label}`)
+              .setIcon('tag')
+              .onClick(() => this.insertLabelAtCursor(editor, label));
+          });
+        });
+      }
+    });
+  }
+
+  private insertLabelAtCursor(editor: Editor, label: string) {
+    const cursor = editor.getCursor();
+    const line = editor.getLine(cursor.line);
+    const beforeChar = cursor.ch > 0 ? line[cursor.ch - 1] : '';
+    const afterChar = line[cursor.ch] || '';
+
+    const needsLeadingSpace = beforeChar !== '' && !/\s/.test(beforeChar);
+    const needsTrailingSpace = afterChar === '' || !/[\s.,;:!?)]/.test(afterChar);
+    const insertion = `${needsLeadingSpace ? ' ' : ''}@${label}${needsTrailingSpace ? ' ' : ''}`;
+
+    editor.replaceRange(insertion, cursor);
+    editor.setCursor({ line: cursor.line, ch: cursor.ch + insertion.length });
+  }
+
+  private getSubmenuFromMenuItem(item: unknown): Menu | null {
+    const candidate = item as { setSubmenu?: () => Menu };
+    if (typeof candidate.setSubmenu === 'function') {
+      return candidate.setSubmenu();
+    }
+    return null;
+  }
+
   /**
    * US-1.5: Logic to convert selected text or current line into a FLOW block
    * Refined to preserve original structure (bullets, checkboxes)
@@ -153,28 +272,16 @@ export default class FlowTxtPlugin extends Plugin {
     const selection = editor.getSelection();
     const cursor = editor.getCursor();
 
-    let textToConvert = selection ? selection : editor.getLine(cursor.line);
-    let from = selection ? editor.getCursor('from') : { line: cursor.line, ch: 0 };
-    let to = selection ? editor.getCursor('to') : { line: cursor.line, ch: textToConvert.length };
+    const textToConvert = selection ? selection : editor.getLine(cursor.line);
+    const from = selection ? editor.getCursor('from') : { line: cursor.line, ch: 0 };
+    const to = selection ? editor.getCursor('to') : { line: cursor.line, ch: textToConvert.length };
 
-    // 1. Identify leading indentation of the first line
-    const lines = textToConvert.split('\n');
-    const firstLine = lines[0];
-    const indentMatch = firstLine.match(/^(\s*)/);
-    const indent = indentMatch ? indentMatch[0] : "";
+    const formattedBlock = formatSelectionAsFlowBlock(textToConvert, keyword);
+    if (!formattedBlock) {
+      return;
+    }
 
-    // 2. Remove the indent from the first line so we can place the keyword between it and the text
-    const cleanFirstLine = firstLine.replace(/^(\s*)/, '');
-    const otherLines = lines.slice(1).join('\n');
-    const fullText = otherLines ? `${cleanFirstLine}\n${otherLines}` : cleanFirstLine;
-
-    // 3. Get active delimiter from settings
-    const activeDelimiter = this.settings.blockKeywords[0] || 'END-FLOW';
-
-    // 4. Construct the block: [INDENT][KEYWORD] [REST_OF_TEXT]\n\n[DELIMITER]
-    const newBlock = `${indent}${keyword} ${fullText.trimEnd()}\n\n${activeDelimiter}`;
-
-    editor.replaceRange(newBlock, from, to);
+    editor.replaceRange(formattedBlock, from, to);
   }
 
   /**
@@ -203,7 +310,16 @@ export default class FlowTxtPlugin extends Plugin {
   // Obsidian lifecycle method called to settings are loaded
   async loadSettings() {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
-    // Normalize settings
+    this.settings.definedLabels = dedupeLabelsCaseInsensitive(this.settings.definedLabels || []);
+    const normalizedLabelColors: Record<string, string> = {};
+    for (const [rawLabel, color] of Object.entries(this.settings.labelColors || {})) {
+      const valid = toValidLabelDisplay(rawLabel);
+      if (!valid) {
+        continue;
+      }
+      normalizedLabelColors[normalizeLabelKey(valid)] = color;
+    }
+    this.settings.labelColors = normalizedLabelColors;
 
 
     // Propagate settings to services

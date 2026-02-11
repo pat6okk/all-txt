@@ -1,163 +1,168 @@
-# Épica 1: Captura y Detección de Estados
+# Epica 1: Captura y Deteccion de Estados
 
-**Descripción:** Cómo el plugin detecta y captura keywords en texto plano, contextos especiales e idioma.
+**Descripcion:** Como el plugin detecta y captura keywords en texto plano, contextos especiales e idioma.
 
 **Componentes principales:** [ENGINE] [EDITOR]  
 **Prioridad:** Must Have
 
 ---
 
-## US-1.1: Strict Header (Detección Estricta)
+## US-1.1: Strict Header (Deteccion Estricta)
 
 **Componentes:** [ENGINE] [EDITOR]  
-**Estado:** � **En Implementación**
+**Estado:** Completado
 
 **Historia:**
-Como usuario, quiero definir mis estados (TODO, DOING) como encabezados claros en mi documento, eliminando la ambigüedad de si una palabra es parte de una frase o un estado real.
+Como usuario, quiero definir mis estados (TODO, DOING) como encabezados claros en mi documento, eliminando la ambiguedad de si una palabra es parte de una frase o un estado real.
 
-**Criterios de Aceptación:**
-- ✅ **Posición Estricta:** La keyword (`TODO`) debe estar al **inicio absoluto** de la línea o precedida únicamente por espacios (indentación).
-- ✅ **Sin Prefijos:** NO se detectará la keyword si está precedida por viñetas (`-`, `*`), números (`1.`) o checkboxes (`- [ ]`).
-    - *Válido:* `TODO Tarea principal`
-    - *Válido:* `  DOING Subtarea indentada`
-    - *Inválido:* `- TODO Tarea en lista` (Se ignora, es texto plano)
-- ✅ El parser ignora keywords a mitad de frase.
+**Criterios de Aceptacion:**
+- La keyword (`TODO`) debe estar al inicio absoluto de la linea o precedida unicamente por espacios.
+- No se detecta la keyword si esta precedida por vinetas, numeros o checkboxes.
+- El parser ignora keywords a mitad de frase.
 
-**Justificación:**
-Este cambio simplifica radicalmente el parser, elimina falsos positivos visuales y fuerza una estructura donde el Estado tiene jerarquía visual de "Título" o "Bloque".
-
-**Implementación técnica:**
-- Regex simplificado: `^(\s*)(${keywords})(.*)`
-- Eliminar lógica de `BULLET_LIST_PATTERN`, etc.
+**Implementacion actual:**
+- Regex estricto en parser: `^(\\s*)(${keywords})\\s+(.+)$`.
+- No se usan prefijos legacy de listas para detectar tareas.
 
 **Archivos relacionados:**
-- [src/parser/task-parser.ts](../../src/parser/task-parser.ts)
+- `src/parser/task-parser.ts`
+- `tests/parser/strict-header.test.ts`
 
 ---
 
-## US-1.2: Captura de Bloque y Contenido Rico
+## US-1.2: Captura de Bloque Organico por Indentacion
 
-**Componentes:** [ENGINE] [VIEW]  
-**Estado:** ⚠️ **Pendiente de diseño**
+**Componentes:** [ENGINE]  
+**Estado:** Completado
 
 **Historia:**
-Como usuario, quiero poder añadir contexto, subtareas y detalles a un estado principal, y que el plugin capture todo ese bloque como una sola unidad ("Tarjeta") hasta encontrar un delimitador.
+Como usuario, quiero anadir contexto y subtareas debajo del estado principal sin delimitadores artificiales, para que el flujo se integre de forma natural en el texto.
 
-**Criterios de Aceptación:**
-- ✅ **Modo Bloque:** El parser captura todo el contenido debajo de un Header (US-1.1) hasta encontrar un separador horizontal `---` (tres guiones) o el final del archivo.
-- ✅ **Contenido Soportado:** Dentro del bloque se debe capturar y asociar a la tarea padre:
-    - Listas de verificación (`[ ]` o `- [ ]`) como subtareas.
-    - Texto plano como descripción/contexto.
-    - Metadatos (ej: `DUE: 2025-10-10`) en cualquier línea del bloque.
-- ✅ **Visualización:** En el panel del plugin, este bloque se renderiza unificado (el texto y subtareas pertenecen al TODO principal).
+**Criterios de Aceptacion:**
+- El bloque comienza despues del header cuando la siguiente linea no vacia tiene mayor indentacion.
+- Una linea pertenece al bloque solo si su indentacion es mayor que la del header padre.
+- El bloque termina por dedent (indentacion igual o menor), siguiente header hermano/padre o fin de archivo.
+- Se capturan subtareas checkbox dentro del bloque.
+- Las lineas de metadata de fecha (`PLAN`/`DUE`) no forman parte del `blockContent`.
 
-**Ejemplo de Bloque Válido:**
+**Ejemplo valido:**
 ```markdown
-TODO Refactorizar Backend
- - [ ] Tarea hija 1
- - [ ] Tarea hija 2
-Nota: Aquí explicamos el contexto complejo.
-DUE: 2023-12-01
----
+TODO cocinar la cena
+    La cena consiste en huevos con arroz:
+    - 2 huevos
+    - [ ] romper huevos
+    - [ ] cocinar arroz
+    De esta manera tenemos que comer.
+
+TODO Esto es otra tarea.
 ```
 
-**Manejo de conflictos:**
-- Si no hay `---`, el bloque termina implícitamente al encontrar la siguiente Keyword de estado válido (igual nivel de indentación) o fin de archivo.
-- La prioridad explícita del delimitador `---` es cerrar el contexto actual inmediatamente.
+**Implementacion actual:**
+- Scanner de bloque por profundidad de indentacion.
+- Extraccion de `subtasks` durante el recorrido del bloque.
 
-**Implementación técnica:**
-- Parser necesita lógica de "Lookahead" o "Accumulation" (multiline scanning).
-- Modelo de datos (`Task`) debe incluir campo `body` o `children`.
+**Archivos relacionados:**
+- `src/parser/task-parser.ts`
+- `tests/parser/block-parser.test.ts`
+- `tests/task-parser.test.ts`
+
+**Nota de alcance:**
+- La visualizacion del bloque en panel (expandir/colapsar) se documenta en `analysis/epics/02-VISUALIZATION_AND_ORGANIZATION.md` (US-2.5).
 
 ---
 
-## US-1.3: Exclusión inteligente de contextos técnicos
+## US-1.3: Exclusion inteligente de contextos tecnicos
 
 **Componentes:** [ENGINE] [CONFIG]  
-**Estado:** 🟢 Implementado
+**Estado:** Completado
 
 **Historia:**
-Como desarrollador que escribe documentación técnica, quiero que el plugin ignore keywords dentro de bloques de código y fórmulas matemáticas, para evitar falsos positivos cuando menciono `TODO` en un snippet de código.
+Como desarrollador que escribe documentacion tecnica, quiero que el plugin ignore keywords dentro de bloques de codigo y formulas matematicas, para evitar falsos positivos cuando menciono `TODO` en un snippet.
 
-**Criterios de Aceptación:**
-- ✅ No detecta keywords en bloques de código (` ```...``` `) por defecto
-- ✅ No detecta keywords en matemáticas inline (`$...$`) o block (`$$...$$`)
-- ✅ No detecta keywords en comentarios de Obsidian (`%%...%%`)
-- ✅ Opción configurable para incluir/excluir bloques de código
-- ✅ Máquina de estados robusta que rastrea contexto (dentro/fuera de bloques)
+**Criterios de Aceptacion:**
+- No detecta keywords en bloques de codigo por defecto.
+- No detecta keywords en bloques matematicos ni comentarios de Obsidian.
+- Existe opcion configurable para incluir/excluir bloques de codigo.
 
-**Implementación actual:**
-- ✅ State machine en `parseFile()`
-- ✅ Regex `CODE_BLOCK_REGEX`, `MATH_BLOCK_REGEX`, `COMMENT_BLOCK_REGEX`
-- ✅ Variables `inBlock` y `blockMarker` controlan el contexto
-- ✅ Setting `includeCodeBlocks` permite override para casos de uso avanzados
+**Implementacion actual:**
+- State machine en `parseFile()`.
+- Regex `CODE_BLOCK_REGEX`, `MATH_BLOCK_REGEX`, `COMMENT_BLOCK_REGEX`.
+- Toggle `includeCodeBlocks` en settings.
 
 **Archivos relacionados:**
-- [src/parser/task-parser.ts](../../src/parser/task-parser.ts) (Máquina de estados)
-- [src/settings/defaults.ts](../../src/settings/defaults.ts) (Toggle `includeCodeBlocks`)
+- `src/parser/task-parser.ts`
+- `src/settings/defaults.ts`
 
 ---
 
 ## US-1.4: Vocabulario personalizado
 
 **Componentes:** [CONFIG] [ENGINE]  
-**Estado:** 🟢 Implementado
+**Estado:** Completado
 
 **Historia:**
-Como usuario con necesidades específicas, quiero definir keywords personalizados que respondan a mis flujos de trabajo (idiomáticos: PENDIENTE, EN_CURSO, HECHO; académicos: INVESTIGAR, ESCRIBIR, REVISAR; ventas: LEAD, QUALIFIED, CLOSED), para trabajar con terminología natural a mi dominio sin fricciones.
+Como usuario con necesidades especificas, quiero definir keywords personalizados que respondan a mis flujos de trabajo para usar terminologia natural de mi dominio.
 
-**Criterios de Aceptación:**
-- ✅ Puedo añadir/editar/eliminar keywords desde la interfaz de configuración
-- ✅ No hay límite en la cantidad de keywords (solo restricciones de memoria)
-- ✅ El sistema mantiene consistencia visual (colores, tooltips) independientemente del idioma
-- ✅ Los keywords se organizan en 3 categorías: Start, In-Progress, Finished
-- ✅ Cada keyword tiene color y descripción/tooltip personalizables
+**Criterios de Aceptacion:**
+- Se pueden anadir/editar/eliminar keywords desde settings.
+- No hay limite practico de keywords en la configuracion.
+- Los keywords se organizan en Start, In-Progress y Finished.
+- Cada keyword puede tener color y descripcion.
 
-**Implementación actual:**
-- ✅ Editor visual en Settings con 3 columnas (`SettingsView.tsx`)
-- ✅ Keywords almacenados en `settings.todoKeywords`, `doingKeywords`, `doneKeywords`
-- ✅ Regeneración automática de regex al cambiar vocabulario
-- ✅ Soporte completo UTF-8 (emojis, caracteres especiales)
+**Implementacion actual:**
+- Editor visual en settings.
+- Regeneracion del parser cuando cambia el vocabulario.
 
 **Archivos relacionados:**
-- [src/ui/settings/VocabularySection.tsx](../../src/ui/settings/VocabularySection.tsx) (Editor de keywords)
-- [src/settings/keyword-modal.ts](../../src/settings/keyword-modal.ts) (Modal de edición avanzada)
-- [src/parser/task-parser.ts](../../src/parser/task-parser.ts) (Método `escapeKeywords()`)
+- `src/ui/settings/VocabularySection.tsx`
+- `src/settings/keyword-modal.ts`
+- `src/parser/task-parser.ts`
 
 ---
 
-## US-1.5: Conversión rápida desde menú contextual
+## US-1.5: Conversion rapida desde menu contextual
 
-**Componentes:** [EDITOR] [CONFIG]  
-**Estado:** 🔴 **Pendiente**
+**Componentes:** [EDITOR] [ENGINE]  
+**Estado:** Completado
 
 **Historia:**
-Como usuario, quiero transformar rápidamente bloques de texto existentes o notas rápidas en "Tareas FLOW" estructuradas usando el clic derecho, para no tener que escribir manualmente la sintaxis de bloque.
+Como usuario, quiero transformar texto existente en un flujo estructurado usando click derecho, para no tener que reescribir manualmente la sintaxis.
 
-**Criterios de Aceptación:**
-- ✅ Al seleccionar texto en el editor y hacer click derecho, aparece el menú `FLOW: Convert to...`.
-- ✅ Se muestra un submenú con las Keywords configuradas (ej: TODO, ASK, IDEA).
-- ✅ Al seleccionar una opción:
-    - Se inserta la Keyword seleccionada al inicio de la primera línea (respetando indentación existente).
-    - Se añade el delimitador `---` en una nueva línea al final de la selección.
-- ✅ Si no hay texto seleccionado, se inserta una plantilla vacía (`TODO \n ---`) en la posición del cursor.
-- ✅ Mantiene el formato interno del bloque (listas, notas) sin cambios destructivos.
+**Criterios de Aceptacion:**
+- Con texto seleccionado, aparece `Convert to flow block...`.
+- Se muestra submenu con estados iniciales configurados (workflow start keywords).
+- Al elegir un estado:
+  - se inserta la keyword en la primera linea;
+  - el resto del bloque se indenta de forma canonica;
+  - no se inserta delimitador artificial.
+- Sin seleccion, convierte la linea actual (si no esta vacia).
+- Se preserva el contenido interno (listas, checkboxes, texto).
+
+**Implementacion actual:**
+- Formateador dedicado para conversion de seleccion a bloque organico.
+- Menu dinamico alimentado por workflows + keywords de inicio.
+
+**Archivos relacionados:**
+- `src/main.ts`
+- `src/editor/flow-block-formatter.ts`
+- `tests/flow-block-formatter.test.ts`
 
 ---
 
-## Resumen de Épica 1
+## Resumen de Epica 1
 
-| US | Descripción | Estado |
+| US | Descripcion | Estado |
 |----|-------------|--------|
-| US-1.1 | Strict Header (Detección Estricta) | � |
-| US-1.2 | Captura de Bloque (Delimited) | ⚠️ |
-| US-1.3 | Exclusión técnica inteligente | 🟢 |
-| US-1.4 | Vocabulario personalizado | 🟢 |
-| US-1.5 | Conversión Menú Contextual | 🔴 |
+| US-1.1 | Strict Header | Completado |
+| US-1.2 | Captura de bloque organico | Completado |
+| US-1.3 | Exclusion de contextos tecnicos | Completado |
+| US-1.4 | Vocabulario personalizado | Completado |
+| US-1.5 | Conversion contextual | Completado |
 
 **Cobertura de componentes:**
-- **[ENGINE]** - 4/5 requeridas
-- **[CONFIG]** - 3/5 requeridas
-- **[EDITOR]** - 3/5 requeridas
+- [ENGINE] completa para captura/deteccion.
+- [EDITOR] completa para resaltado y conversion.
+- [CONFIG] completa para vocabulario y comportamiento de parsing.
 
-**Acción requerida:** Resolver problema de detección en US-1.2 (highlighter vs. parser)
+**Accion requerida:**
+- Mantener sincronizados parser/tests/docs ante cambios de contrato.

@@ -40,7 +40,7 @@ Como usuario con procesos complejos (ventas, investigación, publicación), quie
 ## US-3.2: Ciclos automáticos de transición
 
 **Componentes:** [VIEW] [ENGINE]  
-**Estado:** � Completado
+**Estado:** 🟢 Completado
 
 **Historia:**
 Como usuario que interactúa con items rastreados, quiero que al hacer clic en una keyword avance automáticamente al siguiente estado configurado en mi flujo, para no tener que editar manualmente el texto cada vez.
@@ -145,7 +145,7 @@ Como usuario configurando mi sistema, quiero que al añadir un keyword "Start", 
 | US | Descripción | Estado |
 |----|-------------|--------|
 | US-3.1 | Definir flujos personalizados | 🟢 |
-| US-3.2 | Ciclos automáticos (Retorno Global) | � |
+| US-3.2 | Ciclos automáticos (Retorno Global) | 🟢 |
 | US-3.3 | Flujos jerárquicos | 🟢 |
 | US-3.4 | Menú contextual (Panel + Editor) | 🟢 |
 | US-3.5 | Sincronización vocab-flujos | 🟢 |

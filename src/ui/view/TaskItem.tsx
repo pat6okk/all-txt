@@ -12,6 +12,7 @@ interface TaskItemProps {
 
     // Helper to calculate contrast color
     getContrastColor: (hex: string) => string;
+    getLabelColor: (label: string) => string;
     // Helper to get next state (usually passed from parent/service)
     getNextState: (current: string) => string;
 
@@ -39,7 +40,7 @@ interface TaskItemProps {
 
 export const TaskItem: React.FC<TaskItemProps> = ({
     task, getKeywordColor, onUpdateState, onToggle, onOpenTask, onContextMenu,
-    getContrastColor, getNextState, formatDate, getDateClasses,
+    getContrastColor, getLabelColor, getNextState, formatDate, getDateClasses,
     keywordDescriptions, scheduledColor, deadlineColor, scheduledKeyword, deadlineKeyword,
     onUpdatePriority, onPriorityContextMenu, getNextPriority,
     onDateContextMenu, onLabelContextMenu, availableLabels
@@ -172,31 +173,35 @@ export const TaskItem: React.FC<TaskItemProps> = ({
                     )}
 
                     {/* Labels - Épica 5 */}
-                    {task.labels && task.labels.length > 0 && task.labels.map((label, idx) => (
-                        <span
-                            key={`${label}-${idx}`}
-                            className="label-badge"
-                            role="button"
-                            style={{
-                                backgroundColor: '#BD93F9',
-                                color: 'white',
-                                marginRight: '4px',
-                                padding: '1px 6px',
-                                borderRadius: '10px',
-                                fontSize: '0.7em',
-                                fontWeight: 500,
-                                cursor: 'pointer'
-                            }}
-                            title={`Right-click for options`}
-                            onContextMenu={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                onLabelContextMenu(task, label, e);
-                            }}
-                        >
-                            @{label}
-                        </span>
-                    ))}
+                    {task.labels && task.labels.length > 0 && task.labels.map((label, idx) => {
+                        const labelColor = getLabelColor(label);
+                        const labelContrast = getContrastColor(labelColor);
+                        return (
+                            <span
+                                key={`${label}-${idx}`}
+                                className="label-badge"
+                                role="button"
+                                style={{
+                                    backgroundColor: labelColor,
+                                    color: labelContrast,
+                                    marginRight: '4px',
+                                    padding: '1px 6px',
+                                    borderRadius: '10px',
+                                    fontSize: '0.7em',
+                                    fontWeight: 500,
+                                    cursor: 'pointer'
+                                }}
+                                title={`Right-click for options`}
+                                onContextMenu={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    onLabelContextMenu(task, label, e);
+                                }}
+                            >
+                                @{label}
+                            </span>
+                        );
+                    })}
 
                     <span
                         className="todo-text-content"
@@ -217,7 +222,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
                                     style={{ cursor: 'context-menu' }}
                                 >
                                     <span style={{ fontWeight: 600, color: scheduledColor }}>
-                                        {task.scheduledSymbol || scheduledKeyword || 'SCHEDULED'}:
+                                        {task.scheduledSymbol || scheduledKeyword || 'PLAN'}:
                                     </span>
                                     {' '}{formatDate(task.scheduledDate)}
                                 </span>
@@ -233,7 +238,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
                                     style={{ cursor: 'context-menu' }}
                                 >
                                     <span style={{ fontWeight: 600, color: deadlineColor }}>
-                                        {task.deadlineSymbol || deadlineKeyword || 'DEADLINE'}:
+                                        {task.deadlineSymbol || deadlineKeyword || 'DUE'}:
                                     </span>
                                     {' '}{formatDate(task.deadlineDate)}
                                 </span>

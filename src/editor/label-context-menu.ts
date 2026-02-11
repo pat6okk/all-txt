@@ -2,6 +2,11 @@ import { EditorView } from "@codemirror/view";
 import { Extension } from "@codemirror/state";
 import { Menu } from "obsidian";
 import { SettingsService } from "../services/settings-service";
+import {
+    collectInlineLabels,
+    mergeLabelsWithDefinedOrder,
+    normalizeLabelKey,
+} from "../labels/label-utils";
 
 /**
  * Épica 5: Label Context Menu Extension for CodeMirror
@@ -49,23 +54,11 @@ export function labelContextMenu(
             // Prevent default context menu
             event.preventDefault();
 
-            // Extract all unique labels from the ENTIRE document
-            const docText = view.state.doc.toString();
-            const allLabelsInDoc: Set<string> = new Set();
-            const docLabelRegex = /@([A-Za-z][A-Za-z0-9_-]*)/g;
-            let docMatch;
-            while ((docMatch = docLabelRegex.exec(docText)) !== null) {
-                allLabelsInDoc.add(docMatch[1]);
-            }
-
-            // Also include defined labels from settings
-            const definedLabels = settings.definedLabels || [];
-            definedLabels.forEach(l => allLabelsInDoc.add(l));
-
-            // Convert to array and remove the currently clicked label
-            const otherLabels = Array.from(allLabelsInDoc)
-                .filter(l => l !== clickedLabel!.label)
-                .sort();
+            const docLabels = collectInlineLabels(view.state.doc.toString());
+            const orderedLabels = mergeLabelsWithDefinedOrder(settings.definedLabels || [], docLabels);
+            const clickedLabelKey = normalizeLabelKey(clickedLabel.label);
+            const otherLabels = orderedLabels
+                .filter(label => normalizeLabelKey(label) !== clickedLabelKey);
 
             // Create the menu
             const menu = new Menu();

@@ -1,4 +1,4 @@
-# Épica 6: Personalización del Sistema
+# Épica 7: Personalización del Sistema
 
 **Descripción:** Cómo los usuarios pueden personalizar la apariencia, funcionalidad y comportamiento del plugin.
 
@@ -7,7 +7,7 @@
 
 ---
 
-## US-6.1: Editor visual de vocabulario
+## US-7.1: Editor visual de vocabulario
 
 **Componentes:** [CONFIG]  
 **Estado:** 🟢 Implementado
@@ -45,7 +45,7 @@ No es necesario en Obsidian, pero sí puede ser muy atractivo para otros entorno
 
 ---
 
-## US-6.2: Constructor visual de flujos
+## US-7.2: Constructor visual de flujos
 
 **Componentes:** [CONFIG]  
 **Estado:** 🟢 Implementado
@@ -76,53 +76,36 @@ Como usuario configurando workflows, quiero ver una representación visual de mi
 
 ---
 
-## US-6.3: Intervalo de actualización configurable
+## US-7.3: Sincronización reactiva del panel (sin `refreshInterval`)
 
-**Componentes:** [CONFIG] [ENGINE]  
-**Estado:** 🟡 Parcial (Slider implementado, modo Manual no)
+**Componentes:** [ENGINE] [VIEW]  
+**Estado:** 🟢 Implementado
 
 **Historia:**
-Como usuario preocupado por el rendimiento, quiero ajustar cada cuántos segundos se escanea la bóveda, para balancear responsividad con consumo de recursos.
+Como usuario, quiero que el panel se actualice cuando cambian mis archivos sin depender de un polling configurable, para evitar configuración innecesaria y mantener consistencia en tiempo real.
 
 **Criterios de Aceptación:**
-- ✅ Slider en configuración (10s - 300s)
-- ✅ Guardado automático de la preferencia
-- ✅ Tooltip explicando impacto en rendimiento
-- ❌ Opción "Manual" (solo actualiza con comando)
+- ✅ Actualización por eventos reales del vault (`modify`, `create`, `rename`, `delete`).
+- ✅ Debounce de re-render para evitar sobrecarga en ráfagas de cambios.
+- ✅ Escaneo completo solo al inicio o al cambiar configuración estructural.
+- ✅ Sin setting `refreshInterval` en el contrato activo.
 
-**Requiere fix:** Slider no visible (ver US-6.3 en roadmap v1.1)
-
-**Respuesta sobre modo Manual:**
-
-Modo Manual significaría:
-- Desactivar escaneo automático periódico
-- Usuario debe ejecutar comando manualmente (ej: "Refresh Todo List") para actualizar
-- Útil para bóvedas muy grandes (>5000 archivos) donde escaneo continuo impacta rendimiento
-- También útil para usuarios que prefieren control total sobre cuándo actualizar
-
-**¿Es necesario?**
-- ⚠️ Requiere validación con usuarios de bóvedas grandes
-- ⚠️ Alternativa: detectar automáticamente tamaño de bóveda y ajustar intervalo
-- ⚠️ Puede crear confusión (¿por qué no se actualiza?)
-- ✅ Sí útil para power users con necesidades específicas
-
-**Implementación propuesta (si se decide implementar):**
-- Toggle "Auto-refresh" (On/Off)
-- Si Off: mostrar botón "Refresh Now" en toolbar del panel
-- Comando de teclado: "Todo Inline: Refresh"
+**Decisión de verdad (PRJ-006):**
+- El modelo oficial es reactivo por eventos.
+- `refreshInterval` queda retirado del scope activo hasta nuevo milestone explícito.
 
 **Implementación actual:**
-- ✅ Setting `refreshInterval` (default: 60s)
-- ✅ Intervalo configurable en settings
-- ❌ No hay opción para desactivar completamente
+- ✅ Registro de eventos del vault en `main.ts`.
+- ✅ Reconciliación incremental por archivo en `TaskStore`.
+- ✅ Debounce centralizado para notificar updates de UI.
 
 **Archivos relacionados:**
-- [src/settings/defaults.ts](../../src/settings/defaults.ts) (Setting `refreshInterval`)
-- [src/main.ts](../../src/main.ts) (Lógica de polling)
+- [src/main.ts](../../src/main.ts) (eventos de vault)
+- [src/services/task-store.ts](../../src/services/task-store.ts) (modelo reactivo + debounce)
 
 ---
 
-## US-6.4: Temas y estilos visuales
+## US-7.4: Temas y estilos visuales
 
 **Componentes:** [VIEW] [EDITOR] [CONFIG]  
 **Estado:** 🟡 Parcial (Implementado básico, necesita refinamiento)
@@ -186,22 +169,22 @@ function validateColorContrast(color: string, bgColor: string): boolean {
 
 ---
 
-## Resumen de Épica 6
+## Resumen de Épica 7
 
 | US | Descripción | Estado |
 |----|-------------|--------|
-| US-6.1 | Editor visual vocabulario | 🟢 |
-| US-6.2 | Constructor visual flujos | 🟢 |
-| US-6.3 | Intervalo actualización | 🟡 |
-| US-6.4 | Temas y estilos | 🟡 |
+| US-7.1 | Editor visual vocabulario | 🟢 |
+| US-7.2 | Constructor visual flujos | 🟢 |
+| US-7.3 | Sincronización reactiva | 🟢 |
+| US-7.4 | Temas y estilos | 🟡 |
 
 **Cobertura de componentes:**
-- **[CONFIG]** - 4/4 implementadas (2 completas, 2 parciales)
-- **[VIEW]** - 2/4 utilizadas
-- **[ENGINE]** - 1/4 utilizado
+- **[CONFIG]** - 3/4 implementadas
+- **[VIEW]** - 3/4 utilizadas
+- **[ENGINE]** - 2/4 utilizadas
 
 **Acciones requeridas:**
-1. Auditar por qué slider en US-6.3 no es visible
-2. Implementar modo Manual en US-6.3 (considerado para v1.2)
-3. Implementar validación de contraste WCAG AA en US-6.4
-4. Considerar drag-and-drop para otras plataformas (futuro)
+1. Implementar validación de contraste WCAG AA en US-7.4
+2. Añadir preview de contraste en modal de edición
+3. Considerar drag-and-drop para otras plataformas (futuro)
+4. Evaluar "Refresh manual" solo si aparece necesidad real en bóvedas grandes

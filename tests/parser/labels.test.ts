@@ -10,8 +10,8 @@ describe('Épica 5: Labels System', () => {
             todoKeywords: ['TODO'],
             doingKeywords: ['DOING'],
             doneKeywords: ['DONE'],
-            scheduledKeywords: ['SCHEDULED'],
-            deadlineKeywords: ['DEADLINE'],
+            scheduledKeywords: ['PLAN'],
+            deadlineKeywords: ['DUE'],
             priorityQueues: [['P1', 'P2', 'P3']],
             priorityKeywords: [],
             workflows: [['TODO', 'DOING', 'DONE']],
@@ -112,6 +112,45 @@ describe('Épica 5: Labels System', () => {
             expect(tasks).toHaveLength(1);
             expect(tasks[0].labels).toEqual(['code', 'PR']);
             expect(tasks[0].text).toBe('Review the and submit');
+        });
+
+        test('should keep unknown labels as plain text in defined mode', () => {
+            settings.labelMode = 'defined';
+            settings.definedLabels = ['Backend', 'Urgent'];
+            parser = TaskParser.create(settings);
+
+            const content = 'TODO Fix parser @backend with @unknown tag';
+            const tasks = parser.parseFile(content, 'test.md');
+
+            expect(tasks).toHaveLength(1);
+            expect(tasks[0].labels).toEqual(['Backend']);
+            expect(tasks[0].text).toBe('Fix parser with @unknown tag');
+        });
+
+        test('should normalize case to canonical label display when defined', () => {
+            settings.labelMode = 'defined';
+            settings.definedLabels = ['TeamAlpha'];
+            parser = TaskParser.create(settings);
+
+            const content = 'TODO Pair with @teamalpha';
+            const tasks = parser.parseFile(content, 'test.md');
+
+            expect(tasks).toHaveLength(1);
+            expect(tasks[0].labels).toEqual(['TeamAlpha']);
+            expect(tasks[0].text).toBe('Pair with');
+        });
+
+        test('should canonicalize labels in free mode when a defined match exists', () => {
+            settings.labelMode = 'free';
+            settings.definedLabels = ['Backend'];
+            parser = TaskParser.create(settings);
+
+            const content = 'TODO Review @backend API';
+            const tasks = parser.parseFile(content, 'test.md');
+
+            expect(tasks).toHaveLength(1);
+            expect(tasks[0].labels).toEqual(['Backend']);
+            expect(tasks[0].text).toBe('Review API');
         });
     });
 });

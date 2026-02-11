@@ -13,11 +13,15 @@ You are assisting with Obsidian plugin development. Follow these comprehensive g
 ### Quick Start Tool
 
 For new plugin projects, an interactive boilerplate generator is available:
-- **Script**: `tools/create-plugin.js` in the skill repository
+- **Script**: `tools/create-plugin.js` in the upstream skill repository (external to this project by default)
 - **Slash command**: `/create-plugin` for guided setup
 - Generates minimal, best-practice boilerplate with no sample code
 - Detects existing projects and only adds missing files
 - All generated code follows these guidelines automatically
+
+Execution rule for this repository:
+- Before suggesting or running `tools/create-plugin.js`, verify it exists in the current workspace.
+- If it does not exist locally, treat it as an external reference and do not suggest direct execution.
 
 ### When to Suggest the Tool
 

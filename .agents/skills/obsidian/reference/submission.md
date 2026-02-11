@@ -8,10 +8,13 @@ Guidelines for publishing your plugin to the Obsidian community plugin directory
 your-plugin/
 ├── manifest.json       # Required: Plugin metadata
 ├── main.js            # Required: Compiled plugin code
-├── styles.css         # Optional: Plugin styles
+├── styles.css         # Required in this repository: Plugin styles
 ├── LICENSE            # Required: License file
 └── README.md          # Recommended: Usage documentation
 ```
+
+**Project override (FLOW-txt repository):**
+- `styles.css` is mandatory because CI/release validation requires it.
 
 ---
 

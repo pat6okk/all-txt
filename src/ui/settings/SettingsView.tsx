@@ -2,9 +2,8 @@ import * as React from 'react';
 import TodoTracker from '../../main';
 import { VocabularySection } from './VocabularySection';
 import { WorkflowsSection } from './WorkflowsSection';
-import { BlockDelimitersSection } from './BlockDelimitersSection';
 import { MetadataSection } from './MetadataSection';
-import { DEFAULT_SETTINGS } from '../../settings/defaults';
+import { LabelsSection } from './LabelsSection';
 
 import { SettingsService } from '../../services/settings-service';
 
@@ -25,8 +24,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ plugin, settingsServ
 
             <VocabularySection plugin={plugin} settingsService={settingsService} onSettingsChange={triggerRefresh} />
             <WorkflowsSection plugin={plugin} settingsService={settingsService} onSettingsChange={triggerRefresh} />
-            <BlockDelimitersSection plugin={plugin} settingsService={settingsService} onSettingsChange={triggerRefresh} />
             <MetadataSection plugin={plugin} settingsService={settingsService} onSettingsChange={triggerRefresh} />
+            <LabelsSection plugin={plugin} settingsService={settingsService} onSettingsChange={triggerRefresh} />
         </div>
     );
 };

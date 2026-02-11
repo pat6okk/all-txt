@@ -7,7 +7,6 @@ describe('Task parsing within Rust comments in code blocks', () => {
 
   beforeEach(() => {
     settings = {
-      refreshInterval: 60,
       includeCalloutBlocks: true,
       includeCodeBlocks: true,
       languageCommentSupport: {

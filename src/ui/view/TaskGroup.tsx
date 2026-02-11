@@ -13,6 +13,7 @@ interface TaskGroupProps {
     onOpenTask: (task: Task, e: React.MouseEvent) => void;
     onContextMenu: (task: Task, e: React.MouseEvent) => void;
     getKeywordColor: (k: string) => string;
+    getLabelColor: (label: string) => string;
     getNextState: (c: string) => string;
     getContrastColor: (hex: string) => string;
     formatDate: (date: Date, includeTime?: boolean) => string;
@@ -80,6 +81,7 @@ export const TaskGroup: React.FC<TaskGroupProps> = (props) => {
                             onOpenTask={props.onOpenTask}
                             onContextMenu={props.onContextMenu}
                             getKeywordColor={props.getKeywordColor}
+                            getLabelColor={props.getLabelColor}
                             getNextState={props.getNextState}
                             getContrastColor={props.getContrastColor}
                             formatDate={props.formatDate}

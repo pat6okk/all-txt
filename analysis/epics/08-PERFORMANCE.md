@@ -1,13 +1,13 @@
-# Épica 7: Rendimiento y Experiencia
+# Épica 8: Rendimiento y Experiencia
 
 **Descripción:** Cómo optimizar el plugin para bóvedas grandes, garantizar velocidad y consumo de memoria controlado.
 
 **Componentes principales:** [ENGINE] [VIEW]  
-**Prioridad:** Could Have / CRÍTICO (US-7.3)
+**Prioridad:** Could Have / CRÍTICO (US-8.3)
 
 ---
 
-## US-7.1: Carga inicial rápida
+## US-8.1: Carga inicial rápida
 
 **Componentes:** [ENGINE]  
 **Estado:** 🟡 Parcial (Funciona pero no optimizado para bóvedas grandes)
@@ -40,7 +40,7 @@ Como usuario con bóvedas grandes (>1000 archivos), quiero que el plugin cargue 
 
 ---
 
-## US-7.2: Actualización incremental
+## US-8.2: Actualización incremental
 
 **Componentes:** [ENGINE]  
 **Estado:** 🟡 Parcial (Detecta cambios pero re-escanea archivo completo)
@@ -71,7 +71,7 @@ Como usuario editando una nota, quiero que solo se re-escanee el archivo modific
 
 ---
 
-## US-7.3: Optimización de memoria
+## US-8.3: Optimización de memoria
 
 **Componentes:** [ENGINE] [VIEW]  
 **Estado:** ⚠️ En revisión (Implementado básico, requiere auditoría exhaustiva)
@@ -123,23 +123,23 @@ Memory leaks pueden ocurrir en:
 
 ---
 
-## Resumen de Épica 7
+## Resumen de Épica 8
 
 | US | Descripción | Estado | Prioridad |
 |----|-------------|--------|-----------|
-| US-7.1 | Carga inicial rápida | 🟡 | Could Have |
-| US-7.2 | Actualización incremental | 🟡 | Could Have |
-| US-7.3 | Optimización memoria | ⚠️ | 🚨 CRÍTICO |
+| US-8.1 | Carga inicial rápida | 🟡 | Could Have |
+| US-8.2 | Actualización incremental | 🟡 | Could Have |
+| US-8.3 | Optimización memoria | ⚠️ | 🚨 CRÍTICO |
 
 **Cobertura de componentes:**
 - **[ENGINE]** - 2/3 parcialmente implementadas
 - **[VIEW]** - 1/3 utilizado
 
 **Acciones requeridas (por prioridad):**
-1. **INMEDIATA (Esta semana):** Auditoría de memory leaks (US-7.3)
+1. **INMEDIATA (Esta semana):** Auditoría de memory leaks (US-8.3)
 2. **PRÓXIMA SPRINT (v1.1):** Implementar fixes de memory
-3. **v1.2:** Carga progresiva (4 fases) en US-7.1
-4. **v1.2:** Parsing incremental en US-7.2
+3. **v1.2:** Carga progresiva (4 fases) en US-8.1
+4. **v1.2:** Parsing incremental en US-8.2
 
 **Criterios de Aceptación Revisados para v1.1:**
 - Auditoría completada sin memory leaks detectados

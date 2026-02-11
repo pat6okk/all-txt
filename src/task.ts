@@ -18,8 +18,8 @@ export interface Task {
   priority: string | null;     // Raw priority token (e.g. "A", "P1") or null if none
   priorityLabel: string;       // The full token found in text (e.g. "[#A]") for display reconstruction
   labels: string[];            // Array of label tokens (e.g. ["Trabajo", "Urgente"]) - Épica 5
-  scheduledDate: Date | null; // scheduled date from SCHEDULED: line
-  deadlineDate: Date | null;  // deadline date from DEADLINE: line
+  scheduledDate: Date | null; // scheduled date from PLAN: line (legacy alias SCHEDULED supported)
+  deadlineDate: Date | null;  // deadline date from DUE: line (legacy alias DEADLINE supported)
   // Phase 1: Original symbols
   scheduledSymbol?: string;
   deadlineSymbol?: string;

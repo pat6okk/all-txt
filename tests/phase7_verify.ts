@@ -5,8 +5,8 @@ import { TodoTrackerSettings, DEFAULT_SETTINGS } from '../src/settings/defaults'
 // Mock settings
 const mockSettings: TodoTrackerSettings = {
     ...DEFAULT_SETTINGS,
-    scheduledKeywords: ['SCHEDULED', 'ENTREGA', 'FECHA'],
-    deadlineKeywords: ['DEADLINE', 'LIMITE'],
+    scheduledKeywords: ['PLAN', 'SCHEDULED', 'ENTREGA', 'FECHA'],
+    deadlineKeywords: ['DUE', 'DEADLINE', 'LIMITE'],
     priorityKeywords: ['A', 'B', 'URGENTE', 'NORMAL']
 };
 
@@ -17,27 +17,27 @@ const parser = TaskParser.create(mockSettings);
 const testCases = [
     {
         name: 'Standard Scheduled',
-        input: `- [ ] TODO Task 1\n  SCHEDULED: <2025-01-01>`,
+        input: `TODO Task 1\nPLAN: <2025-01-01>`,
         expectedDateType: 'scheduled'
     },
     {
         name: 'Custom Scheduled (ENTREGA)',
-        input: `- [ ] TODO Task 2\n  ENTREGA: <2025-02-01>`,
+        input: `TODO Task 2\nENTREGA: <2025-02-01>`,
         expectedDateType: 'scheduled'
     },
     {
         name: 'Custom Deadline (LIMITE)',
-        input: `- [ ] TODO Task 3\n  LIMITE: <2025-03-01>`,
+        input: `TODO Task 3\nLIMITE: <2025-03-01>`,
         expectedDateType: 'deadline'
     },
     {
         name: 'Custom Priority [#URGENTE]',
-        input: `- [ ] TODO [#URGENTE] Critical Task`,
+        input: `TODO [#URGENTE] Critical Task`,
         expectedPriority: 'high'
     },
     {
         name: 'Standard Priority [#A]',
-        input: `- [ ] TODO [#A] Top Priority`,
+        input: `TODO [#A] Top Priority`,
         expectedPriority: 'high'
     }
 ];

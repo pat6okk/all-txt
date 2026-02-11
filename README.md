@@ -1,7 +1,7 @@
 # FLOW.txt
 
 <p align="center">
-  <strong>Your notes already know what needs to happen.<br>FLOW.txt helps you see it.</strong>
+  <strong>Tus notas ya saben qué debe pasar.<br>FLOW.txt te ayuda a verlo.</strong>
 </p>
 
 <p align="center">
@@ -12,161 +12,185 @@
 
 ---
 
-## The Idea
+## La Idea
 
-Every note you write is full of things in motion: tasks to complete, questions to answer, decisions pending approval, ideas evolving into facts. **FLOW.txt** makes those states visible and trackable—without changing how you write.
+Cada nota que escribes está llena de cosas en movimiento: tareas por completar, preguntas por responder, decisiones pendientes de aprobación, ideas evolucionando hacia hechos. **FLOW.txt** hace esos estados visibles y rastreables—sin cambiar cómo escribes.
 
-Just type a keyword. The plugin does the rest.
-
-```markdown
-ASK Who owns the migration?
-```
-
-Later, when you have the answer:
+Solo escribe una palabra clave. El plugin hace el resto.
 
 ```markdown
-FACT John owns the migration
+ASK ¿Quién se encarga de la migración?
 ```
 
-That's it. No special syntax. No databases. Pure Markdown that works everywhere.
-
----
-
-## Why FLOW.txt?
-
-**Inspired by [TODO.txt](http://todotxt.org/)**, but evolved. TODO.txt gave us portable task tracking in plain text. FLOW.txt extends that philosophy to *anything with states*:
-
-| Domain | Example Flow |
-|--------|--------------|
-| **Tasks** | `TODO → DOING → DONE` |
-| **Questions** | `ASK → FACT` |
-| **Decisions** | `PROPOSITION → ACCEPTED` or `REJECTED` |
-| **Research** | `HYPOTHESIS → VALIDATED` or `INVALIDATED` |
-| **Content** | `DRAFT → REVIEW → PUBLISHED` |
-| **Sales** | `LEAD → CONTACTED → QUALIFIED → CLOSED` |
-| **Risks** | `RISK → MITIGATED → RESOLVED` |
-| **Learning** | `CONCEPT → UNDERSTOOD → APPLIED` |
-
-You define the states. You define the flows. The plugin adapts to *your* logic.
-
----
-
-## How It Works
-
-**1. Write naturally.** Use keywords anywhere in your notes:
+Más tarde, cuando tengas la respuesta:
 
 ```markdown
-## Meeting Notes - Dec 8
-
-TODO Send proposal to client
-ASK What's the budget timeline?
-PROPOSITION Move deadline to January
-RISK Integration might break legacy systems
-
-- DOING Review competitor analysis
-- DONE Initial research complete
+FACT John se encarga de la migración
 ```
 
-**2. See everything.** Open the sidebar panel to view all tracked items across your vault, grouped and sorted however you want.
-
-**3. Click to advance.** Click a keyword to move it to the next state. `TODO` becomes `DOING`. `ASK` becomes `FACT`. The change saves directly to your Markdown.
-
-**4. Take it anywhere.** Copy your notes to email, wikis, other editors—the keywords stay readable and meaningful. No lock-in.
+Eso es todo. Sin sintaxis especial. Sin bases de datos. Markdown puro que funciona en cualquier lugar.
 
 ---
 
-## Perfect For
+## Por qué FLOW.txt?
 
-- **Meeting transcripts**: Paste a transcript, ask an AI to find action items, decisions, and questions. Keywords appear. FLOW.txt tracks them.
-- **Research notes**: Track hypotheses as they evolve from ideas to validated findings.
-- **Project management**: Simple task tracking without the overhead of complex tools.
-- **Decision logs**: Never lose track of what was proposed, accepted, or rejected.
-- **Knowledge building**: Mark questions and convert them to facts as you learn.
+**Inspirado en [TODO.txt](http://todotxt.org/)**, pero evolucionado. TODO.txt nos dio seguimiento de tareas portátil en texto plano. FLOW.txt extiende esa filosofía a *cualquier cosa con estados*:
+
+| Dominio | Flujo de Ejemplo |
+|---------|------------------|
+| **Tareas** | `TODO → DOING → DONE` |
+| **Preguntas** | `ASK → FACT` |
+| **Decisiones** | `PROPOSITION → ACCEPTED` o `REJECTED` |
+| **Investigación** | `HYPOTHESIS → VALIDATED` o `INVALIDATED` |
+| **Contenido** | `DRAFT → REVIEW → PUBLISHED` |
+| **Ventas** | `LEAD → CONTACTED → QUALIFIED → CLOSED` |
+| **Riesgos** | `RISK → MITIGATED → RESOLVED` |
+| **Aprendizaje** | `CONCEPT → UNDERSTOOD → APPLIED` |
+
+Tú defines los estados. Tú defines los flujos. El plugin se adapta a *tu* lógica.
 
 ---
 
-## Installation
+## Cómo Funciona
 
-**Community Plugins** (when available):  
-Settings → Community Plugins → Browse → Search "FLOW.txt" → Install → Enable
+**1. Escribe naturalmente.** Usa palabras clave al inicio de línea (se permite indentación):
+
+```markdown
+## Notas de Reunión - 8 Dic
+
+TODO Enviar propuesta al cliente
+ASK ¿Cuál es la línea de tiempo del presupuesto?
+PROPOSITION Mover deadline a enero
+RISK La integración podría romper sistemas legacy
+
+DOING Revisar análisis de competencia
+DONE Investigación inicial completa
+```
+
+**Formato estricto del parser:**
+- La tarea debe comenzar con la palabra clave (`TODO`, `DOING`, `DONE`, etc.) al inicio de línea.
+- No se aceptan prefijos legacy como `- TODO`, `1. TODO` o `- [ ] TODO`.
+- No se detectan tareas dentro de blockquotes/callouts.
+
+**2. Visualiza todo.** Abre el panel lateral para ver todos los items rastreados en tu bóveda, agrupados y ordenados como quieras.
+
+**3. Haz clic para avanzar.** Haz clic en una palabra clave para moverla al siguiente estado. `TODO` se convierte en `DOING`. `ASK` se convierte en `FACT`. El cambio se guarda directamente en tu Markdown.
+
+**4. Llévalo a donde sea.** Copia tus notas a email, wikis, otros editores—las palabras clave siguen siendo legibles y significativas. Sin lock-in.
+
+---
+
+## Perfecto Para
+
+- **Transcripciones de reuniones**: Pega una transcripción, pídele a una IA que encuentre acciones, decisiones y preguntas. Aparecen palabras clave. FLOW.txt las rastrea.
+- **Notas de investigación**: Rastrea hipótesis mientras evolucionan de ideas a hallazgos validados.
+- **Gestión de proyectos**: Seguimiento de tareas simple sin la complejidad de herramientas pesadas.
+- **Registro de decisiones**: Nunca pierdas el rastro de lo que fue propuesto, aceptado o rechazado.
+- **Construcción de conocimiento**: Marca preguntas y conviértelas en hechos a medida que aprendes.
+
+---
+
+## Instalación
+
+**Community Plugins** (cuando esté disponible):  
+Settings → Community Plugins → Browse → Buscar "FLOW.txt" → Install → Enable
 
 **Manual**:  
-Download from [Releases](https://github.com/pat6okk/flow-txt/releases), extract to `<vault>/.obsidian/plugins/flow-txt/`, reload Obsidian.
+Descarga desde [Releases](https://github.com/pat6okk/flow-txt/releases), extrae en `<vault>/.obsidian/plugins/flow-txt/`, recarga Obsidian.
 
 ---
 
-## Customization
+## Personalización
 
-Everything is configurable in Settings → FLOW.txt:
+Todo es configurable en Settings → FLOW.txt:
 
-- **Define your vocabulary**: Add any keywords you want (states, colors, tooltips)
-- **Build workflows**: Connect states with custom transition rules
-- **Set priorities**: `P1`, `A`, or custom tokens like `#High`
-- **Add dates**: `SCHEDULED: 2025-12-15` or `DEADLINE: 2025-12-31`
-  - Flexible formats: `YYYY-MM-DD`, `DD/MM/YYYY`, or `MM-DD-YYYY`
-  - Natural language: "tomorrow", "next Friday"
-  - **Date Picker**: Right-click on any date or badge to open the calendar UI
+- **Define tu vocabulario**: Añade las palabras clave que quieras (estados, colores, tooltips)
+- **Construye workflows**: Conecta estados con reglas de transición personalizadas
+- **Configura prioridades/labels**: `P1`, `A`, o tokens personalizados como `#Urgente`
+- **Añade fechas**: `PLAN: 25/12/2025` o `DUE: 2025-12-31`
+  - Formatos flexibles: `DD/MM/YYYY`, `YYYY-MM-DD`, o `MM-DD-YYYY`
+  - Lenguaje natural: "mañana", "next Friday" (en inglés por ahora)
+  - **Date Picker**: Click derecho en cualquier fecha o badge para abrir el calendario nativo.
+  - Compatibilidad temporal: también se aceptan `SCHEDULED` y `DEADLINE` como alias legacy.
 
-Default keywords work out of the box. Customize when you're ready.
+Las palabras clave por defecto funcionan desde el inicio. Personaliza cuando estés listo.
 
 ---
 
-## Examples
+## Ejemplos
 
-**Knowledge capture:**
+**Captura de conocimiento:**
 ```markdown
-ASK How does the auth flow work?
-FACT Auth uses OAuth2 with refresh tokens, handled by AuthService
+ASK ¿Cómo funciona el flujo de autenticación?
+FACT La autenticación usa OAuth2 con refresh tokens, gestionado por AuthService
 ```
 
-**Decision tracking:**
+**Seguimiento de decisiones:**
 ```markdown
-PROPOSITION Migrate to TypeScript strict mode
-ACCEPTED Migrate to TypeScript strict mode (approved in sprint review)
+PROPOSITION Migrar a TypeScript strict mode
+ACCEPTED Migrar a TypeScript strict mode (aprobado en sprint review)
 ```
 
-**Research workflow:**
+**Flujo de investigación:**
 ```markdown
-HYPOTHESIS Users prefer dark mode by default
-VALIDATED 85% preference in user survey (n=500)
+HYPOTHESIS Los usuarios prefieren modo oscuro por defecto
+VALIDATED 85% de preferencia en encuesta de usuarios (n=500)
 ```
 
-**Sales pipeline:**
+**Pipeline de ventas:**
 ```markdown
-LEAD Acme Corp - interested in enterprise plan
-CONTACTED Sent proposal and pricing
-QUALIFIED Budget confirmed, decision next week
-CLOSED Contract signed 🎉
+LEAD Acme Corp - interesado en plan enterprise
+CONTACTED Propuesta y pricing enviados
+QUALIFIED Presupuesto confirmado, decisión la próxima semana
+CLOSED Contrato firmado 🎉
 ```
+
+### Bloques de Contenido Estricto
+
+FLOW.txt captura automáticamente el contexto de tus items usando estructura orgánica por indentación (sin delimitadores artificiales):
+
+```markdown
+TODO Tarea compleja
+    Paso 1
+    Paso 2
+    > Nota importante
+
+Texto normal que ya no pertenece a la tarea...
+```
+
+**Reglas del bloque:**
+- El bloque inicia después del header (`TODO/DOING/...`) cuando la siguiente línea no vacía está más indentada.
+- El bloque termina al encontrar una línea no vacía con indentación igual o menor al header.
+- También termina al encontrar otro header hermano o padre, o al llegar al final del archivo.
 
 ---
 
-## The Vision
+## La Visión
 
-FLOW.txt is not a task manager. It's a **state machine for your thoughts**.
+FLOW.txt no es un gestor de tareas. Es una **máquina de estados para tus pensamientos**.
 
-The goal: make it effortless to capture, track, and advance *anything* that moves through states—using plain text that stays portable and AI-friendly.
+El objetivo: hacer que sea fácil capturar, rastrear y avanzar *cualquier cosa* que se mueva a través de estados—usando texto plano que se mantiene portable y amigable con IA.
 
-We're building toward:
-- AI-assisted keyword detection from transcripts
-- Contextual state suggestions based on content
-- Outcome-aware auto-completion (detect when something is resolved)
-- Multi-language keyword support
-
----
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md). We welcome bug fixes, performance improvements, and thoughtful feature proposals.
+Estamos construyendo hacia:
+- Detección de palabras clave asistida por IA desde transcripciones
+- Sugerencias de estados contextuales basadas en contenido
+- Auto-completado consciente de resultados (detectar cuándo algo está resuelto)
+- Soporte multi-idioma para palabras clave
 
 ---
 
-## License
+## Contribuir
+
+Ver [CONTRIBUTING.md](CONTRIBUTING.md). Damos la bienvenida a correcciones de bugs, mejoras de rendimiento y propuestas de funcionalidades bien pensadas.
+
+---
+
+## Licencia
 
 [MIT](LICENSE) © 2025 Pat6okk
 
 ---
 
 <p align="center">
-  <strong>Star ⭐ if FLOW.txt helps you think clearer.</strong>
+  <strong>Dale ⭐ si FLOW.txt te ayuda a pensar con más claridad.</strong>
 </p>

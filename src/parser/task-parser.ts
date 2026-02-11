@@ -2,6 +2,12 @@ import { Task, SubTask, DEFAULT_COMPLETED_STATES, DEFAULT_PENDING_STATES, DEFAUL
 import { TodoTrackerSettings } from "../settings/defaults";
 import { LanguageRegistry, LanguageDefinition, LanguageCommentSupportSettings } from "./language-registry";
 import { DateParser } from "./date-parser";
+import {
+  buildDefinedLabelMap,
+  collectTaskLabelMatches,
+  getCanonicalLabelDisplay,
+  normalizeLabelKey,
+} from '../labels/label-utils';
 
 type RegexPair = { test: RegExp; capture: RegExp };
 
@@ -43,6 +49,8 @@ const CALLOUT_BLOCK_REGEX = /^\s*>.*/
 const CODE_PREFIX = /\s*[\s\S]*?/.source
 
 const TASK_TEXT = /[\w[].+?/.source;  // at least one word
+const LEGACY_SCHEDULED_ALIAS = 'SCHEDULED';
+const LEGACY_DEADLINE_ALIAS = 'DEADLINE';
 
 
 export class TaskParser {
@@ -65,7 +73,8 @@ export class TaskParser {
   private deadlineKeywords: string[];
   private priorityKeywords: string[];
   private priorityQueues: string[][];
-  private blockKeywords: string[]; // Keywords array
+  private readonly labelMode: 'free' | 'defined';
+  private readonly definedLabelsByKey: Map<string, string>;
 
   private constructor(
     regex: RegexPair,
@@ -77,7 +86,8 @@ export class TaskParser {
     scheduledKeywords: string[],
     deadlineKeywords: string[],
     priorityQueues: string[][],
-    blockKeywords: string[]
+    labelMode: 'free' | 'defined',
+    definedLabelsByKey: Map<string, string>,
   ) {
     this.allKeywords = allKeywords;
     this.completedKeywords = completedKeywords;
@@ -85,6 +95,8 @@ export class TaskParser {
     this.deadlineKeywords = deadlineKeywords;
     this.priorityQueues = priorityQueues;
     this.priorityKeywords = priorityQueues.flat(); // Flattened for regex building
+    this.labelMode = labelMode;
+    this.definedLabelsByKey = definedLabelsByKey;
 
     this.testRegex = regex.test;
     this.captureRegex = regex.capture;
@@ -92,7 +104,6 @@ export class TaskParser {
     this.includeCalloutBlocks = includeCalloutBlocks;
     this.includeCodeBlocks = includeCodeBlocks;
     this.languageCommentSupport = languageCommentSupport;
-    this.blockKeywords = blockKeywords;
   }
 
 
@@ -120,6 +131,23 @@ export class TaskParser {
     }
 
     const regex = TaskParser.buildRegex(allKeywordsArray);
+    const configuredScheduledKeywords = settings.scheduledKeywords?.length
+      ? settings.scheduledKeywords
+      : ['PLAN'];
+    const configuredDeadlineKeywords = settings.deadlineKeywords?.length
+      ? settings.deadlineKeywords
+      : ['DUE'];
+    const scheduledKeywords = TaskParser.withLegacyDateAliases(
+      configuredScheduledKeywords,
+      [LEGACY_SCHEDULED_ALIAS],
+    );
+    const deadlineKeywords = TaskParser.withLegacyDateAliases(
+      configuredDeadlineKeywords,
+      [LEGACY_DEADLINE_ALIAS],
+    );
+    const labelMode = settings.labelMode === 'defined' ? 'defined' : 'free';
+    const definedLabelsByKey = buildDefinedLabelMap(settings.definedLabels || []);
+
     return new TaskParser(
       regex,
       settings.includeCalloutBlocks,
@@ -127,10 +155,11 @@ export class TaskParser {
       settings.languageCommentSupport,
       allKeywordsArray,
       completedSet,
-      settings.scheduledKeywords || ['SCHEDULED'],
-      settings.deadlineKeywords || ['DEADLINE'],
+      scheduledKeywords,
+      deadlineKeywords,
       pQueues,
-      settings.blockKeywords || ['END', 'FIN', 'STOP']
+      labelMode,
+      definedLabelsByKey,
     );
   }
 
@@ -143,6 +172,28 @@ export class TaskParser {
     return keywords
       .map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
       .join('|');
+  }
+
+  /**
+   * Keep temporary legacy aliases for date metadata compatibility.
+   * Canonical keywords are PLAN/DUE.
+   */
+  private static withLegacyDateAliases(
+    configuredKeywords: string[],
+    legacyAliases: string[],
+  ): string[] {
+    const merged = [...configuredKeywords];
+    const seen = new Set(merged.map(keyword => keyword.toUpperCase()));
+
+    for (const alias of legacyAliases) {
+      const normalizedAlias = alias.toUpperCase();
+      if (!seen.has(normalizedAlias)) {
+        merged.push(alias);
+        seen.add(normalizedAlias);
+      }
+    }
+
+    return merged;
   }
 
   /**
@@ -224,16 +275,16 @@ export class TaskParser {
       throw new Error(`Failed to parse task line: ${line}`);
     }
 
-    // US-1.1: Simplified regex groups
-    // m[0] is the full match
-    // m[1] is the leading whitespace (indentation)
-    // m[2] is the state keyword
-    // m[3] is the task text
+    // Strict header regex groups:
+    // 1 = indent, 2 = state, 3 = task text
+    // Code regex groups:
+    // 1 = comment prefix/indent, 2 = list marker, 3 = checkbox, 4 = state, 5 = text, 6 = tail
+    const isCodeRegexMatch = m.length >= 7;
     const indent = m[1] || "";
-    const listMarker = ""; // No list markers in strict mode
-    const state = m[2];
-    const taskText = m[3];
-    const tail = ""; // No tail in strict mode
+    const listMarker = isCodeRegexMatch ? `${m[2] || ''}${m[3] || ''}` : "";
+    const state = isCodeRegexMatch ? (m[4] || "") : (m[2] || "");
+    const taskText = isCodeRegexMatch ? (m[5] || "") : (m[3] || "");
+    const tail = isCodeRegexMatch ? (m[6] || "") : "";
 
     return {
       indent,
@@ -295,27 +346,24 @@ export class TaskParser {
     }
 
     let cleanedText = taskText;
-
-    // Regex to match @label tokens
-    // Matches: @word (alphanumeric + underscores, at least 1 char)
-    // Does NOT match: @@ or @ alone or email-like patterns
-    const labelRegex = /(?:^|\s)@([A-Za-z][A-Za-z0-9_-]*)(?=\s|$|[.,;:!?])/g;
-
-    let match;
-    const foundLabels: { label: string; fullMatch: string; index: number }[] = [];
-
-    while ((match = labelRegex.exec(taskText)) !== null) {
-      foundLabels.push({
-        label: match[1],
-        fullMatch: match[0],
-        index: match.index
-      });
-    }
+    const foundLabels = collectTaskLabelMatches(taskText).map(match => {
+      const canonical = getCanonicalLabelDisplay(match.label, this.definedLabelsByKey);
+      const existsInDefined = canonical !== null && this.definedLabelsByKey.has(normalizeLabelKey(canonical));
+      const shouldExtract = this.labelMode === 'free' || existsInDefined;
+      return {
+        ...match,
+        canonicalLabel: canonical,
+        shouldExtract,
+      };
+    });
 
     // Extract labels and clean text (process in reverse to maintain indices)
     for (let i = foundLabels.length - 1; i >= 0; i--) {
-      const { label, fullMatch, index } = foundLabels[i];
-      labels.unshift(label); // Add to front to maintain order
+      const { fullMatch, index, canonicalLabel, shouldExtract } = foundLabels[i];
+      if (!shouldExtract || !canonicalLabel) {
+        continue;
+      }
+      labels.unshift(canonicalLabel); // Add to front to maintain order
 
       // Remove the label from text
       const before = cleanedText.slice(0, index);
@@ -366,7 +414,8 @@ export class TaskParser {
   }
 
   /**
-   * Check if a line contains SCHEDULED: or DEADLINE:
+   * Check if a line contains PLAN: or DUE:
+   * Legacy aliases SCHEDULED/DEADLINE are supported temporarily.
    * @returns Match object with type and keyword, or null
    */
   getDateLineInfo(line: string, taskIndent: string): { type: 'scheduled' | 'deadline', keyword: string } | null {
@@ -395,7 +444,8 @@ export class TaskParser {
   }
 
   /**
-   * Parse a date from a line containing SCHEDULED: or DEADLINE: prefix
+   * Parse a date from a line containing PLAN: or DUE: prefix
+   * Legacy aliases SCHEDULED/DEADLINE are supported temporarily.
    * @param line The line to parse
    * @param keyword The specific keyword found to strip
    */
@@ -584,78 +634,72 @@ export class TaskParser {
         tail: taskDetails.tail,
       };
 
-      // US-1.2: Block Parsing Logic
-      // KEY RULE: Only capture block content if there is an EXPLICIT --- delimiter
+      // US-1.2: Block parsing by indentation depth
+      // Capture only lines with deeper indentation than the parent task header.
+      // End when we hit same/less indentation, a sibling/parent task header, or EOF.
       const blockContent: string[] = [];
       const subtasks: SubTask[] = [];
       let blockEndLine = index;
 
-      // First, scan ahead to see if there IS a --- delimiter
-      let delimiterFound = false;
-      let delimiterLine = -1;
-
       for (let scan = index + 1; scan < lines.length; scan++) {
-        const scanLine = lines[scan].trim();
+        const nextLine = lines[scan];
+        const nextLineTrimmed = nextLine.trim();
 
-        // Stop scanning if we hit another keyword at same/lesser indentation
-        if (this.testRegex.test(lines[scan])) {
-          const scanMatch = this.captureRegex.exec(lines[scan]);
+        // Empty lines are allowed inside an already-started block.
+        if (nextLineTrimmed === '') {
+          if (blockContent.length > 0) {
+            blockContent.push(nextLine);
+            blockEndLine = scan;
+          }
+          continue;
+        }
+
+        // Stop scanning at sibling/parent task headers.
+        if (this.testRegex.test(nextLine)) {
+          const scanMatch = this.captureRegex.exec(nextLine);
           if (scanMatch) {
-            const scanIndent = scanMatch[1] || "";
+            const scanIndent = scanMatch[1] || '';
             if (scanIndent.length <= taskDetails.indent.length) {
-              break; // Next task found, stop scanning
+              break;
             }
           }
         }
 
-        // Check for block delimiter keyword
-        // Match if the first word of the line is one of the block keywords
-        const firstWord = scanLine.split(/\s+/)[0];
-        if (this.blockKeywords.includes(firstWord)) {
-          delimiterFound = true;
-          delimiterLine = scan;
+        const nextIndentMatch = nextLine.match(/^(\s*)/);
+        const nextIndent = nextIndentMatch ? nextIndentMatch[1] : '';
+        const isDeeperIndent = nextIndent.length > taskDetails.indent.length;
+
+        // Organic closure: first non-empty line at same/less indentation ends the block.
+        if (!isDeeperIndent) {
           break;
+        }
+
+        // Date metadata lines are not part of block content.
+        const dateInfo = this.getDateLineInfo(nextLine, taskDetails.indent);
+        if (dateInfo) {
+          continue;
+        }
+
+        blockContent.push(nextLine);
+        blockEndLine = scan;
+
+        // Detect subtasks within the block
+        const subtaskMatch = nextLine.match(/^(\s*)[-*+]\s\[([ xX])\]\s+(.+)$/);
+        if (subtaskMatch) {
+          subtasks.push({
+            indent: subtaskMatch[1],
+            text: subtaskMatch[3],
+            completed: subtaskMatch[2].toLowerCase() === 'x',
+            line: scan
+          });
         }
       }
 
-      // ONLY capture block content if we found a --- delimiter
-      if (delimiterFound && delimiterLine > index) {
-        for (let j = index + 1; j < delimiterLine; j++) {
-          const nextLine = lines[j];
-          const nextLineTrimmed = nextLine.trim();
-
-          // Skip completely empty lines
-          if (nextLineTrimmed === '') {
-            blockContent.push(nextLine);
-            continue;
-          }
-
-          // Check if this line is a date metadata line (SCHEDULED, DEADLINE, etc.)
-          // These should NOT be part of blockContent; they'll be parsed by extractTaskDates
-          const dateInfo = this.getDateLineInfo(nextLine, taskDetails.indent);
-          if (dateInfo) {
-            // This is a date line, skip it from blockContent
-            continue;
-          }
-
-          // Line is part of the block content
-          blockContent.push(nextLine);
-          blockEndLine = j;
-
-          // Detect subtasks within the block
-          const subtaskMatch = nextLine.match(/^(\s*)[-*+]\s\[([ xX])\]\s+(.+)$/);
-          if (subtaskMatch) {
-            subtasks.push({
-              indent: subtaskMatch[1],
-              text: subtaskMatch[3],
-              completed: subtaskMatch[2].toLowerCase() === 'x',
-              line: j
-            });
-          }
+      while (blockContent.length > 0 && blockContent[blockContent.length - 1].trim() === '') {
+        blockContent.pop();
+        if (blockEndLine > index) {
+          blockEndLine--;
         }
-
-        // Set blockEndLine to the delimiter line
-        blockEndLine = delimiterLine;
       }
 
       task.blockContent = blockContent;

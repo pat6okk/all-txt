@@ -7,6 +7,12 @@ import { TaskStore } from '../services/task-store';
 import { SortMethod, GroupingMethod } from '../settings/defaults';
 import { DatePickerModal } from '../ui/DatePickerModal';
 import { DateParser } from '../parser/date-parser';
+import {
+  buildDefinedLabelMap,
+  escapeRegexLiteral,
+  mergeLabelsWithDefinedOrder,
+  normalizeLabelKey,
+} from '../labels/label-utils';
 
 // React Imports
 import * as React from 'react';
@@ -145,8 +151,10 @@ export class TodoView extends ItemView {
     // Extract available states, priorities, and labels for filters
     const availableStates = Array.from(new Set(this.tasks.map(t => t.state)));
     const availablePriorities = Array.from(new Set(this.tasks.map(t => t.priority).filter(p => p !== null))) as string[];
-    // Épica 5: Extract all unique labels
-    const availableLabels = Array.from(new Set(this.tasks.flatMap(t => t.labels || [])));
+    const availableLabels = mergeLabelsWithDefinedOrder(
+      this.taskStore.getSettings().definedLabels || [],
+      this.tasks.flatMap(task => task.labels || []),
+    );
 
 
     this.root.render(
@@ -203,6 +211,7 @@ export class TodoView extends ItemView {
 
         // Utils
         getKeywordColor={(k) => this.workflowService.getKeywordColor(k)}
+        getLabelColor={(label) => this.getLabelColor(label)}
         getNextState={(s) => this.workflowService.getNextState(s)}
         getNextPriority={(p) => this.workflowService.getNextPriority(p)} // Add helper
         getContrastColor={(hex) => this.getContrastColor(hex)}
@@ -215,12 +224,12 @@ export class TodoView extends ItemView {
 
         // Phase 17 Data
         keywordDescriptions={this.taskStore.getSettings().keywordDescriptions || {}}
-        scheduledColor={this.workflowService.getKeywordColor(this.taskStore.getSettings().scheduledKeywords[0] || 'SCHEDULED')}
-        deadlineColor={this.workflowService.getKeywordColor(this.taskStore.getSettings().deadlineKeywords[0] || 'DEADLINE')}
+        scheduledColor={this.workflowService.getKeywordColor(this.taskStore.getSettings().scheduledKeywords[0] || 'PLAN')}
+        deadlineColor={this.workflowService.getKeywordColor(this.taskStore.getSettings().deadlineKeywords[0] || 'DUE')}
 
         // Phase 17b Labels
-        scheduledKeyword={this.taskStore.getSettings().scheduledKeywords[0] || 'SCHEDULED'}
-        deadlineKeyword={this.taskStore.getSettings().deadlineKeywords[0] || 'DEADLINE'}
+        scheduledKeyword={this.taskStore.getSettings().scheduledKeywords[0] || 'PLAN'}
+        deadlineKeyword={this.taskStore.getSettings().deadlineKeywords[0] || 'DUE'}
 
         // Épica 5: Labels
         onLabelContextMenu={(t, label, e) => this.openLabelMenuAtMouseEvent(t, label, e.nativeEvent)}
@@ -342,8 +351,8 @@ export class TodoView extends ItemView {
     if (filters.labels && filters.labels.length > 0) {
       filtered = filtered.filter(t => {
         if (!t.labels || t.labels.length === 0) return false;
-        // Task must have at least one of the selected labels
-        return filters.labels.some(label => t.labels.includes(label));
+        const taskLabelKeys = new Set(t.labels.map(label => normalizeLabelKey(label)));
+        return filters.labels.some(label => taskLabelKeys.has(normalizeLabelKey(label)));
       });
     }
 
@@ -389,6 +398,11 @@ export class TodoView extends ItemView {
     const b = parseInt(hex.substr(5, 2), 16);
     const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
     return (yiq >= 128) ? 'black' : 'white';
+  }
+
+  private getLabelColor(label: string): string {
+    const colors = this.taskStore.getSettings().labelColors || {};
+    return colors[normalizeLabelKey(label)] || colors[label] || '#BD93F9';
   }
 
   private async openTaskLocation(task: Task, event: React.MouseEvent | MouseEvent) {
@@ -477,9 +491,11 @@ export class TodoView extends ItemView {
   private openLabelMenuAtMouseEvent(task: Task, label: string, evt: MouseEvent) {
     const menu = new Menu();
 
-    // Get all available labels
-    const allLabels = Array.from(new Set(this.tasks.flatMap(t => t.labels || [])));
-    const otherLabels = allLabels.filter(l => l !== label).sort();
+    const allLabels = mergeLabelsWithDefinedOrder(
+      this.taskStore.getSettings().definedLabels || [],
+      this.tasks.flatMap(task => task.labels || []),
+    );
+    const otherLabels = allLabels.filter(existing => normalizeLabelKey(existing) !== normalizeLabelKey(label));
 
     // Header
     menu.addItem(item => {
@@ -545,13 +561,18 @@ export class TodoView extends ItemView {
     const lines = content.split('\n');
     const taskLine = lines[task.line];
 
+    const oldLabelRegex = new RegExp(`@${escapeRegexLiteral(oldLabel)}\\b`, 'i');
+    const definedLabels = buildDefinedLabelMap(this.taskStore.getSettings().definedLabels || []);
+
     let updatedLine: string;
     if (newLabel) {
-      // Replace the label
-      updatedLine = taskLine.replace(new RegExp(`@${oldLabel}\\b`), `@${newLabel}`);
+      const canonicalNewLabel = definedLabels.get(normalizeLabelKey(newLabel)) || newLabel;
+      updatedLine = taskLine.replace(oldLabelRegex, `@${canonicalNewLabel}`);
     } else {
-      // Remove the label (and cleanup extra spaces)
-      updatedLine = taskLine.replace(new RegExp(`\\s*@${oldLabel}\\b`), '').replace(/\s+/g, ' ').trim();
+      updatedLine = taskLine
+        .replace(new RegExp(`\\s*@${escapeRegexLiteral(oldLabel)}\\b`, 'i'), '')
+        .replace(/[ \t]{2,}/g, ' ')
+        .replace(/[ \t]+$/g, '');
     }
 
     lines[task.line] = updatedLine;
@@ -566,7 +587,7 @@ export class TodoView extends ItemView {
    */
   private openDateMenuAtMouseEvent(task: Task, dateType: 'scheduled' | 'deadline', evt: MouseEvent) {
     const currentDate = dateType === 'scheduled' ? task.scheduledDate : task.deadlineDate;
-    const title = dateType === 'scheduled' ? 'Edit Scheduled Date' : 'Edit Deadline';
+    const title = dateType === 'scheduled' ? 'Edit Plan Date' : 'Edit Due Date';
     const dateFormat = this.taskStore.getSettings().dateFormat;
 
     new DatePickerModal(
@@ -592,8 +613,8 @@ export class TodoView extends ItemView {
     if (!(file instanceof TFile)) return;
 
     const dateKeyword = dateType === 'scheduled'
-      ? (task.scheduledSymbol || this.taskStore.getSettings().scheduledKeywords[0] || 'SCHEDULED')
-      : (task.deadlineSymbol || this.taskStore.getSettings().deadlineKeywords[0] || 'DEADLINE');
+      ? (task.scheduledSymbol || this.taskStore.getSettings().scheduledKeywords[0] || 'PLAN')
+      : (task.deadlineSymbol || this.taskStore.getSettings().deadlineKeywords[0] || 'DUE');
 
     const dateFormat = this.taskStore.getSettings().dateFormat;
     const formattedDate = newDate ? DateParser.formatDate(newDate, dateFormat) : null;

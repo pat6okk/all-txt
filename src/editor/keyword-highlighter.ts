@@ -1,6 +1,7 @@
 import { Extension } from "@codemirror/state";
 import { Decoration, DecorationSet, EditorView, ViewPlugin, ViewUpdate } from "@codemirror/view";
 import { TodoTrackerSettings } from "../settings/defaults";
+import { normalizeLabelKey } from "../labels/label-utils";
 
 export function keywordHighlighter(getSettings: () => TodoTrackerSettings): Extension {
     const settings = getSettings();
@@ -12,8 +13,7 @@ export function keywordHighlighter(getSettings: () => TodoTrackerSettings): Exte
     const activeKeywords = new Set([
         ...(settings.todoKeywords || []),
         ...(settings.doingKeywords || []),
-        ...(settings.doneKeywords || []),
-        ...(settings.blockKeywords || [])
+        ...(settings.doneKeywords || [])
     ]);
 
     // 2. Build map and assign colors
@@ -68,18 +68,6 @@ export function keywordHighlighter(getSettings: () => TodoTrackerSettings): Exte
         ? new RegExp(`(?:^|\\s)(${escapedPriorities})(?=\\s|$)`, 'gi')
         : null;
 
-    // 5b. Build Regex for block delimiters (full line match)
-    // Matches delimiters that appear alone on a line (with optional whitespace)
-    const blockDelimiters = settings.blockDelimiterPresets || [];
-    const escapedDelimiters = blockDelimiters
-        .filter(d => d && d.length > 0)
-        .map(d => d.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
-        .join('|');
-
-    const delimiterRegex = escapedDelimiters
-        ? new RegExp(`^\\s*(${escapedDelimiters})\\s*$`, 'i')
-        : null;
-
     // 6. Build Regex for label matching (@label syntax) - Épica 5
     // Matches @word tokens (alphanumeric + underscores/dashes)
     const labelRegex = /(?:^|\s)(@[A-Za-z][A-Za-z0-9_-]*)(?=\s|$|[.,;:!?])/g;
@@ -112,7 +100,6 @@ export function keywordHighlighter(getSettings: () => TodoTrackerSettings): Exte
         priorityMap: Map<string, string>;
         keywordRegex: RegExp | null;
         priorityRegex: RegExp | null;
-        delimiterRegex: RegExp | null;
         labelColors: Record<string, string>;
         settingsHash: string;
 
@@ -123,7 +110,6 @@ export function keywordHighlighter(getSettings: () => TodoTrackerSettings): Exte
             this.priorityMap = new Map();
             this.keywordRegex = null;
             this.priorityRegex = null;
-            this.delimiterRegex = null;
             this.labelColors = {};
             this.rebuildMapsAndRegex();
             this.decorations = this.buildDecorations(view);
@@ -151,8 +137,6 @@ export function keywordHighlighter(getSettings: () => TodoTrackerSettings): Exte
                 JSON.stringify(settings.todoKeywords),
                 JSON.stringify(settings.doingKeywords),
                 JSON.stringify(settings.doneKeywords),
-                JSON.stringify(settings.blockKeywords),
-                JSON.stringify(settings.blockDelimiterPresets),
                 JSON.stringify(settings.priorityQueues),
                 JSON.stringify(settings.keywordColors),
                 JSON.stringify(settings.labelColors)
@@ -172,8 +156,7 @@ export function keywordHighlighter(getSettings: () => TodoTrackerSettings): Exte
             const activeKeywords = new Set([
                 ...(settings.todoKeywords || []),
                 ...(settings.doingKeywords || []),
-                ...(settings.doneKeywords || []),
-                ...(settings.blockKeywords || [])
+                ...(settings.doneKeywords || [])
             ]);
 
             activeKeywords.forEach(k => {
@@ -220,18 +203,7 @@ export function keywordHighlighter(getSettings: () => TodoTrackerSettings): Exte
                 ? new RegExp(`(?:^|\\s)(${escapedPriorities})(?=\\s|$)`, 'gi')
                 : null;
 
-            // 5. Build delimiter regex
-            const blockDelimiters = settings.blockDelimiterPresets || [];
-            const escapedDelimiters = blockDelimiters
-                .filter(d => d && d.length > 0)
-                .map(d => d.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
-                .join('|');
-
-            this.delimiterRegex = escapedDelimiters
-                ? new RegExp(`^\\s*(${escapedDelimiters})\\s*$`, 'i')
-                : null;
-
-            // 6. Load label colors
+            // 5. Load label colors
             this.labelColors = settings.labelColors || {};
         }
 
@@ -334,7 +306,11 @@ export function keywordHighlighter(getSettings: () => TodoTrackerSettings): Exte
                         const labelName = labelWithAt.substring(1); // Without @
 
                         // Get color from settings or use default
-                        const color = this.labelColors[labelName] || this.labelColors[labelWithAt] || defaultLabelColor;
+                        const color =
+                            this.labelColors[normalizeLabelKey(labelName)]
+                            || this.labelColors[labelName]
+                            || this.labelColors[labelWithAt]
+                            || defaultLabelColor;
                         const contrast = getContrastColor(color);
 
                         // Calculate position
@@ -358,41 +334,6 @@ export function keywordHighlighter(getSettings: () => TodoTrackerSettings): Exte
                                 }
                             }).range(labelStart, labelEnd)
                         );
-                    }
-
-                    // Check for block delimiters (full line match)
-                    if (this.delimiterRegex) {
-                        const delimMatch = lineText.match(this.delimiterRegex);
-                        if (delimMatch) {
-                            const delimiter = delimMatch[1];
-                            const delimiterUpper = delimiter.toUpperCase();
-
-                            // Try to find color from keywordMap (it should be there from activeKeywords)
-                            const color = this.keywordMap.get(delimiterUpper) || '#6272A4';
-                            const contrast = getContrastColor(color);
-
-                            // Calculate position (accounting for leading whitespace)
-                            const leadingWhitespace = lineText.match(/^\s*/)?.[0] || '';
-                            const delimiterStart = line.from + leadingWhitespace.length;
-                            const delimiterEnd = delimiterStart + delimiter.length;
-
-                            decorations.push(
-                                Decoration.mark({
-                                    class: 'cm-todo-delimiter',
-                                    attributes: {
-                                        style: `
-                                            background-color: ${color}; 
-                                            color: ${contrast}; 
-                                            border-radius: 3px; 
-                                            padding: 2px 8px; 
-                                            font-weight: bold; 
-                                            font-size: 0.9em;
-                                            display: inline-block;
-                                        `
-                                    }
-                                }).range(delimiterStart, delimiterEnd)
-                            );
-                        }
                     }
 
                     pos = line.to + 1;

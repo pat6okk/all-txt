@@ -4,10 +4,10 @@
 
 **Componentes principales:** [ENGINE] [VIEW] [CONFIG]  
 **Prioridad:** Should Have
-**Estado:** ✅ COMPLETADO (2026-02-02)
+**Estado:** ✅ COMPLETADO (actualizado 2026-02-10)
 
 > **Resumen de Cierre**:
-> Se ha implementado exitosamente un sistema flexible de parsing de fechas (sin delimitadores), un selector de fecha nativo (HTML5) integrado en Panel y Editor, y configuración de preferencias de formato. Las prioridades se mantienen en su implementación funcional actual, con un roadmap claro para evolucionar a "Labels" en el futuro.
+> Se ha implementado exitosamente un sistema flexible de parsing de fechas (sin delimitadores), un selector de fecha nativo (HTML5) integrado en Panel y Editor, y configuración de preferencias de formato. La separación contractual entre prioridades y labels quedó cerrada en producción (ver Épica 6).
 
 ---
 
@@ -17,7 +17,7 @@
 **Estado:** 🟡 Parcial (Parsing básico completo, lenguaje natural pendiente)
 
 **Historia:**
-Como planificador, quiero añadir fechas de inicio (`SCHEDULED:`) y fechas límite (`DEADLINE:`) a mis items, para gestionar compromisos temporales sin salir del Markdown.
+Como planificador, quiero añadir fechas de inicio (`PLAN:`) y fechas límite (`DUE:`) a mis items, para gestionar compromisos temporales sin salir del Markdown.
 
 **Criterios de Aceptación:**
 - ✅ Sintaxis configurable: keywords personalizables en settings (`scheduledKeywords`, `deadlineKeywords`)
@@ -26,14 +26,14 @@ Como planificador, quiero añadir fechas de inicio (`SCHEDULED:`) y fechas lími
 - ✅ Ordenamiento por fecha en el panel (sortMethods: `sortByScheduled`, `sortByDeadline`)
 - ✅ Visualización de fechas en cada item con iconos y colores
 - ❌ Validación de fechas inválidas (actualmente silenciosamente ignora)
-- ❌ Edición de fechas desde el panel (requiere editar archivo)
+- ✅ Edición de fechas desde el panel vía menú contextual + DatePicker
 - ❌ Recordatorios/notificaciones de fechas próximas
 
 **Sintaxis soportada:**
 ```markdown
 TODO Preparar presentación
-SCHEDULED: 2025-12-25
-DEADLINE: 2025-12-31
+PLAN: 2025-12-25
+DUE: 2025-12-31
 ```
 
 **Formato recomendado:**
@@ -41,8 +41,8 @@ DEADLINE: 2025-12-31
 Fechas deben estar en **línea siguiente** (más legible y compatible con otros plugins):
 ```markdown
 TODO Preparar presentación
-SCHEDULED: 2025-12-25
-DEADLINE: 2025-12-31
+PLAN: 2025-12-25
+DUE: 2025-12-31
 ```
 
 **Implementación actual (✅ US-4.1 Completada - Fase 1):**
@@ -65,9 +65,6 @@ DEADLINE: 2025-12-31
 - ⏳ Validación estricta: mostrar error visual si formato inválido
 - ⏳ Soporte para rangos de fechas
 - ⏳ Notificaciones configurables (alertar N días antes de deadline)
-- ⏳ Validación estricta: mostrar error visual si formato inválido
-- ⏳ Soporte para rangos de fechas
-- ⏳ Notificaciones configurables (alertar N días antes de deadline)
 
 **Archivos relacionados:**
 - [src/parser/date-parser.ts](../../src/parser/date-parser.ts) (Parsing flexible de fechas)
@@ -85,7 +82,7 @@ DEADLINE: 2025-12-31
 **Estado:** ✅ **DECISIÓN CERRADA** (2026-02-03)
 
 > **Resolución:** Single-system de prioridad + Sistema de Labels separado.  
-> **Ver:** [Épica 5: Labels System](./05-LABELS_SYSTEM.md)
+> **Ver:** [Épica 6: Labels System](./06-LABELS_SYSTEM.md)
 
 ### Análisis Realizado
 
@@ -200,7 +197,7 @@ Como usuario con deadlines, quiero ver claramente qué items están vencidos o p
 | US | Descripción | Estado |
 |----|-------------|--------|
 | US-4.1 | Fechas programadas y límites | 🟡 |
-| US-4.2 | Prioridades multi-cola | ⚠️ |
+| US-4.2 | Prioridades multi-cola | ✅ |
 | US-4.3 | Indicadores vencimiento | 🟡 |
 
 **Cobertura de componentes:**
@@ -209,7 +206,6 @@ Como usuario con deadlines, quiero ver claramente qué items están vencidos o p
 - **[CONFIG]** - 1/3 parcialmente
 
 **Acciones requeridas:**
-1. CRÍTICO: Decidir sobre multi-cola en US-4.2 (¿mantener o recomendar single-system?)
-2. Resolver regla de "misma línea vs. línea siguiente" para fechas (US-4.1)
-3. Implementar umbrales configurables en US-4.3
-4. Añadir validación de fechas inválidas
+1. Resolver regla de "misma línea vs. línea siguiente" para fechas (US-4.1)
+2. Implementar umbrales configurables en US-4.3
+3. Añadir validación de fechas inválidas

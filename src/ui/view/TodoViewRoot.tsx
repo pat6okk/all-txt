@@ -41,6 +41,7 @@ interface TodoViewRootProps {
 
     // Services / Utils
     getKeywordColor: (k: string) => string;
+    getLabelColor: (label: string) => string;
     getNextState: (c: string) => string;
     getContrastColor: (hex: string) => string;
     formatDate: (date: Date, includeTime?: boolean) => string;
@@ -124,6 +125,7 @@ export const TodoViewRoot: React.FC<TodoViewRootProps> = (props) => {
                                 onOpenTask={props.onOpenTask}
                                 onContextMenu={props.onContextMenu}
                                 getKeywordColor={props.getKeywordColor}
+                                getLabelColor={props.getLabelColor}
                                 getNextState={props.getNextState}
                                 getContrastColor={props.getContrastColor}
                                 formatDate={props.formatDate}
@@ -151,6 +153,7 @@ export const TodoViewRoot: React.FC<TodoViewRootProps> = (props) => {
                         onOpenTask={props.onOpenTask}
                         onContextMenu={props.onContextMenu}
                         getKeywordColor={props.getKeywordColor}
+                        getLabelColor={props.getLabelColor}
                         getNextState={props.getNextState}
                         getContrastColor={props.getContrastColor}
                         formatDate={props.formatDate}
@@ -159,7 +162,7 @@ export const TodoViewRoot: React.FC<TodoViewRootProps> = (props) => {
                             props.allTasksCount === 0 ? (
                                 <div className="todo-empty-state">
                                     <p>No tasks found in vault.</p>
-                                    <p>Create a task using <code>- [ ] TODO item</code></p>
+                                    <p>Create a task using <code>TODO item</code></p>
                                 </div>
                             ) : (
                                 <div className="todo-empty-state">
@@ -194,6 +197,7 @@ interface TaskGroupProps {
     onOpenTask: (task: Task, e: React.MouseEvent) => void;
     onContextMenu: (task: Task, e: React.MouseEvent) => void;
     getKeywordColor: (k: string) => string;
+    getLabelColor: (label: string) => string;
     getNextState: (c: string) => string;
     getContrastColor: (hex: string) => string;
     formatDate: (date: Date, includeTime?: boolean) => string;
@@ -274,6 +278,7 @@ const TaskGroup: React.FC<TaskGroupProps> = (props) => {
                     onOpenTask={props.onOpenTask}
                     onContextMenu={props.onContextMenu}
                     getKeywordColor={props.getKeywordColor}
+                    getLabelColor={props.getLabelColor}
                     getNextState={props.getNextState}
                     getContrastColor={props.getContrastColor}
                     formatDate={props.formatDate}

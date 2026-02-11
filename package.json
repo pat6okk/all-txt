@@ -23,6 +23,8 @@
   "scripts": {
     "dev": "node esbuild.config.mjs",
     "build": "tsc --noEmit --skipLibCheck && node esbuild.config.mjs production",
+    "sync:agents": "node scripts/sync-agent-instructions.mjs",
+    "sync:agents:check": "node scripts/sync-agent-instructions.mjs --check",
     "version": "node version-bump.mjs && git add manifest.json versions.json",
     "test": "jest"
   },

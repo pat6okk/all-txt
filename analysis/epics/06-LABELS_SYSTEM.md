@@ -1,10 +1,10 @@
-# Épica 5: Sistema de Etiquetas (Labels) Multi-dimensionales
+# Épica 6: Sistema de Etiquetas (Labels) Multi-dimensionales
 
 **Descripción:** Sistema de clasificación complementario a las prioridades que permite múltiples etiquetas por tarea para categorización, filtrado y agrupación.
 
 **Componentes principales:** [ENGINE] [VIEW] [CONFIG]  
 **Prioridad:** Should Have  
-**Estado:** ✅ IMPLEMENTADO (2026-02-03)
+**Estado:** ✅ IMPLEMENTADO (actualizado 2026-02-10)
 
 ---
 
@@ -22,7 +22,10 @@
 | Badges en Panel Lateral | ✅ | `src/ui/view/TaskItem.tsx` |
 | Filtro por Labels | ✅ | `src/ui/view/AdvancedFiltersPanel.tsx` |
 | Context Menu Panel | ✅ | `src/view/task-view.tsx` |
-| Tests Unitarios | ✅ | `tests/parser/labels.test.ts` (9 tests) |
+| Gestión de Labels en Settings | ✅ | `src/ui/settings/LabelsSection.tsx` |
+| Autocompletado + alta rápida | ✅ | `src/editor/label-editor-suggest.ts` |
+| Inserción contextual de Labels | ✅ | `src/main.ts` |
+| Tests Unitarios | ✅ | `tests/parser/labels.test.ts`, `tests/labels-utils.test.ts` |
 
 ---
 
@@ -109,7 +112,7 @@ export interface TodoTrackerSettings {
 
 ## Historias de Usuario
 
-### US-5.1: Parsing de Labels ✅ COMPLETADO
+### US-6.1: Parsing de Labels ✅ COMPLETADO
 
 **Componentes:** [ENGINE]  
 **Estado:** ✅ Completado
@@ -125,7 +128,7 @@ export interface TodoTrackerSettings {
 
 ---
 
-### US-5.2: Visualización de Labels ✅ COMPLETADO
+### US-6.2: Visualización de Labels ✅ COMPLETADO
 
 **Componentes:** [VIEW] [EDITOR]  
 **Estado:** ✅ Completado
@@ -141,7 +144,7 @@ export interface TodoTrackerSettings {
 
 ---
 
-### US-5.3: Filtrado por Labels ✅ COMPLETADO
+### US-6.3: Filtrado por Labels ✅ COMPLETADO
 
 **Componentes:** [VIEW] [CONFIG]  
 **Estado:** ✅ Completado
@@ -158,7 +161,7 @@ export interface TodoTrackerSettings {
 
 ---
 
-### US-5.4: Context Menu para Labels ✅ COMPLETADO
+### US-6.4: Context Menu para Labels ✅ COMPLETADO
 
 **Componentes:** [EDITOR] [VIEW]  
 **Estado:** ✅ Completado
@@ -174,27 +177,40 @@ export interface TodoTrackerSettings {
 
 ---
 
-### US-5.5: Gestión de Labels en Settings 📋 PENDIENTE
+### US-6.5: Gestión de Labels en Settings ✅ COMPLETADO
 
 **Componentes:** [CONFIG]  
-**Estado:** 📋 Pendiente
+**Estado:** ✅ Completado
 
-**Pendiente:**
-- [ ] Sección "Labels" en SettingsTab
-- [ ] Añadir/eliminar labels predefinidos
-- [ ] Asignar color a cada label
-- [ ] Toggle: modo libre vs definido
+**Implementación:**
+- Sección dedicada "Labels" en SettingsTab
+- Alta/baja/renombrado de labels predefinidos
+- Reordenamiento manual de labels
+- Selector de color por label
+- Toggle contractual `labelMode`: `free` / `defined`
+
+**Archivos:**
+- `src/ui/settings/LabelsSection.tsx`
+- `src/ui/settings/SettingsView.tsx`
+- `src/services/settings-service.ts`
 
 ---
 
-### US-5.6: Autocompletado de Labels 🔮 FUTURO
+### US-6.6: Autocompletado de Labels ✅ COMPLETADO
 
 **Componentes:** [ENGINE] [EDITOR]  
-**Estado:** 🔮 Futuro
+**Estado:** ✅ Completado
 
-**Pendiente:**
+**Implementación:**
 - Menú de autocompletado al escribir `@` en editor
-- Requiere EditorSuggest de Obsidian API
+- Navegación con teclado (flechas + enter)
+- Alta rápida de label al registro global desde el popup
+- Scope por defecto en nota actual, con opción de expandir a labels del vault
+
+**Archivos:**
+- `src/editor/label-editor-suggest.ts`
+- `src/main.ts`
+- `src/labels/label-utils.ts`
 
 ---
 
@@ -207,15 +223,18 @@ export interface TodoTrackerSettings {
 | `src/settings/defaults.ts` | ✅ Modificado | `labelMode`, `definedLabels`, `labelColors` |
 | `src/editor/keyword-highlighter.ts` | ✅ Modificado | Decoración visual labels |
 | `src/editor/label-context-menu.ts` | ✅ Creado | Context menu en editor |
+| `src/editor/label-editor-suggest.ts` | ✅ Creado | Autocompletado de labels en editor |
 | `src/ui/view/TaskItem.tsx` | ✅ Modificado | Badges + context menu |
+| `src/ui/settings/LabelsSection.tsx` | ✅ Creado | Gestión de labels en settings |
 | `src/ui/view/AdvancedFiltersPanel.tsx` | ✅ Modificado | Filtro por labels |
 | `src/ui/view/TodoList.tsx` | ✅ Modificado | Props propagadas |
 | `src/ui/view/TaskGroup.tsx` | ✅ Modificado | Props propagadas |
 | `src/ui/view/TodoViewRoot.tsx` | ✅ Modificado | Props propagadas |
 | `src/ui/view/TodoToolbar.tsx` | ✅ Modificado | availableLabels prop |
 | `src/view/task-view.tsx` | ✅ Modificado | Context menu + filter logic |
-| `src/main.ts` | ✅ Modificado | Registro labelContextMenu |
-| `tests/parser/labels.test.ts` | ✅ Creado | 9 tests unitarios |
+| `src/main.ts` | ✅ Modificado | Registro de suggest + inserción contextual |
+| `tests/parser/labels.test.ts` | ✅ Modificado | Cobertura de `labelMode` contractual |
+| `tests/labels-utils.test.ts` | ✅ Creado | Tests de normalización y orden canónico |
 
 ---
 
@@ -224,7 +243,7 @@ export interface TodoTrackerSettings {
 ```bash
 npm test -- tests/parser/labels.test.ts
 
-# Resultado: 9 passed, 9 total
+# Resultado: labels parser + utils en verde
 ```
 
 **Tests implementados:**
@@ -237,3 +256,6 @@ npm test -- tests/parser/labels.test.ts
 - should handle task with no labels
 - should handle labels at the beginning of text
 - should handle labels in the middle of text
+- should keep unknown labels as plain text in defined mode
+- should normalize case to canonical label display when defined
+- should canonicalize labels in free mode when a defined match exists

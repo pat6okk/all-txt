@@ -1,5 +1,11 @@
 import { TodoTrackerSettings, DEFAULT_SETTINGS } from '../settings/defaults';
 import FlowTxtPlugin from '../main';
+import {
+    buildDefinedLabelMap,
+    dedupeLabelsCaseInsensitive,
+    normalizeLabelKey,
+    toValidLabelDisplay,
+} from '../labels/label-utils';
 
 // Central service for manipulating settings
 // Replaces disjointed logic in React components
@@ -16,10 +22,26 @@ export class SettingsService {
 
     // Generic saver
     private async save() {
+        this.normalizeLabelState();
         await this.plugin.saveSettings();
         // Trigger updates if necessary (parser, store)
         this.plugin.recreateParser();
         this.plugin.taskStore.scanVault();
+    }
+
+    private normalizeLabelState() {
+        this.settings.definedLabels = dedupeLabelsCaseInsensitive(this.settings.definedLabels || []);
+
+        const currentColors = this.settings.labelColors || {};
+        const normalizedColors: Record<string, string> = {};
+        for (const [rawLabel, color] of Object.entries(currentColors)) {
+            const valid = toValidLabelDisplay(rawLabel);
+            if (!valid) {
+                continue;
+            }
+            normalizedColors[normalizeLabelKey(valid)] = color;
+        }
+        this.settings.labelColors = normalizedColors;
     }
 
     // --- Vocabulary Management ---
@@ -89,6 +111,121 @@ export class SettingsService {
         const newQueues = [...this.settings.priorityQueues];
         newQueues[groupIdx] = newKeywords;
         this.settings.priorityQueues = newQueues;
+        await this.save();
+    }
+
+    // --- Labels Management ---
+
+    getDefinedLabelMap(): Map<string, string> {
+        return buildDefinedLabelMap(this.settings.definedLabels || []);
+    }
+
+    getOrderedDefinedLabels(): string[] {
+        return dedupeLabelsCaseInsensitive(this.settings.definedLabels || []);
+    }
+
+    getLabelColor(label: string): string {
+        const valid = toValidLabelDisplay(label);
+        if (!valid) {
+            return '#BD93F9';
+        }
+
+        const key = normalizeLabelKey(valid);
+        return this.settings.labelColors[key]
+            || this.settings.labelColors[valid]
+            || this.settings.labelColors[`@${valid}`]
+            || '#BD93F9';
+    }
+
+    async setLabelColor(label: string, color: string) {
+        const valid = toValidLabelDisplay(label);
+        if (!valid) {
+            return;
+        }
+        const key = normalizeLabelKey(valid);
+        this.settings.labelColors[key] = color;
+        await this.save();
+    }
+
+    async updateLabelMode(mode: 'free' | 'defined') {
+        this.settings.labelMode = mode;
+        await this.save();
+    }
+
+    async upsertDefinedLabel(rawLabel: string): Promise<string | null> {
+        const valid = toValidLabelDisplay(rawLabel);
+        if (!valid) {
+            return null;
+        }
+
+        const map = this.getDefinedLabelMap();
+        const existing = map.get(normalizeLabelKey(valid));
+        if (existing) {
+            return existing;
+        }
+
+        this.settings.definedLabels = [...(this.settings.definedLabels || []), valid];
+        await this.save();
+        return valid;
+    }
+
+    async removeDefinedLabel(label: string) {
+        const valid = toValidLabelDisplay(label);
+        if (!valid) {
+            return;
+        }
+
+        const key = normalizeLabelKey(valid);
+        this.settings.definedLabels = (this.settings.definedLabels || []).filter(
+            existing => normalizeLabelKey(existing) !== key
+        );
+        delete this.settings.labelColors[key];
+        await this.save();
+    }
+
+    async renameDefinedLabel(oldLabel: string, newLabelRaw: string): Promise<string | null> {
+        const newLabel = toValidLabelDisplay(newLabelRaw);
+        if (!newLabel) {
+            return null;
+        }
+
+        const oldKey = normalizeLabelKey(oldLabel);
+        const newKey = normalizeLabelKey(newLabel);
+        const labels = [...(this.settings.definedLabels || [])];
+        const targetIndex = labels.findIndex(label => normalizeLabelKey(label) === oldKey);
+
+        if (targetIndex === -1) {
+            return null;
+        }
+
+        const collision = labels.find(
+            (label, index) => index !== targetIndex && normalizeLabelKey(label) === newKey
+        );
+        if (collision) {
+            return collision;
+        }
+
+        labels[targetIndex] = newLabel;
+        this.settings.definedLabels = labels;
+
+        if (oldKey !== newKey && this.settings.labelColors[oldKey]) {
+            this.settings.labelColors[newKey] = this.settings.labelColors[oldKey];
+            delete this.settings.labelColors[oldKey];
+        }
+
+        await this.save();
+        return newLabel;
+    }
+
+    async moveDefinedLabel(index: number, direction: 'up' | 'down') {
+        const labels = [...(this.settings.definedLabels || [])];
+        const target = direction === 'up' ? index - 1 : index + 1;
+        if (index < 0 || index >= labels.length || target < 0 || target >= labels.length) {
+            return;
+        }
+
+        [labels[index], labels[target]] = [labels[target], labels[index]];
+        this.settings.definedLabels = labels;
         await this.save();
     }
 

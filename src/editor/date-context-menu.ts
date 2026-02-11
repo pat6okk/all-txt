@@ -8,7 +8,7 @@ import { DateParser } from "../parser/date-parser";
 /**
  * US-4.1 Phase 2: Context Menu for Dates in Editor
  * Adds right-click functionality to date lines in the editor.
- * When user right-clicks on a date line (SCHEDULED/DEADLINE), shows the DatePickerModal.
+ * When user right-clicks on a date line (PLAN/DUE), shows the DatePickerModal.
  */
 export function dateContextMenu(
     app: App,
@@ -25,8 +25,8 @@ export function dateContextMenu(
             const lineText = line.text;
             const trimText = lineText.trim();
 
-            const scheduledKeywords = settingsService.settings.scheduledKeywords || ['SCHEDULED'];
-            const deadlineKeywords = settingsService.settings.deadlineKeywords || ['DEADLINE'];
+            const scheduledKeywords = settingsService.settings.scheduledKeywords || ['PLAN'];
+            const deadlineKeywords = settingsService.settings.deadlineKeywords || ['DUE'];
             const allDateKeywords = [...scheduledKeywords, ...deadlineKeywords];
 
             // Check if line corresponds to a date metadata line
@@ -58,7 +58,7 @@ export function dateContextMenu(
             event.stopPropagation();
 
             // Open DatePicker
-            const title = scheduledKeywords.includes(matchedKeyword) ? 'Edit Scheduled Date' : 'Edit Deadline';
+            const title = scheduledKeywords.includes(matchedKeyword) ? 'Edit Plan Date' : 'Edit Due Date';
 
             new DatePickerModal(
                 app,

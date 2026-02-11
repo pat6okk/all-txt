@@ -1,4 +1,4 @@
-# Contributing to TODO inline
+# Contributing to FLOW.txt
 
 Please keep contributions focused, tested, and privacy-safe.
 

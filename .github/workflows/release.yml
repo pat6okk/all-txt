@@ -14,6 +14,27 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Enforce tags from main
+        run: |
+          git fetch origin main --depth=1
+          tag="${GITHUB_REF#refs/tags/}"
+          tag_commit="$(git rev-list -n 1 "$tag")"
+
+          if [ -z "$tag_commit" ]; then
+            echo "❌ Unable to resolve commit for tag: $tag"
+            exit 1
+          fi
+
+          if ! git merge-base --is-ancestor "$tag_commit" "origin/main"; then
+            echo "❌ Tag $tag is not based on origin/main."
+            echo "Tag commit: $tag_commit"
+            exit 1
+          fi
+
+          echo "✅ Tag $tag is based on origin/main."
 
       - name: Setup Node.js
         uses: actions/setup-node@v4

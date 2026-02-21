@@ -81,15 +81,16 @@ Eres un ingeniero de software senior especializado en el ecosistema de extension
 
 -   `AGENTS.md`: instrucciones canónicas del agente.
 -   `README.md`: visión y uso oficial del proyecto.
--   `analysis/diagnostics/PROJECT_DIAGNOSTIC.md`: estado oficial de PRJ, checklist y checkpoints.
--   `analysis/diagnostics/PROMPTING_SYSTEM_DIAGNOSTIC.md`: estado oficial de PRM, checklist y checkpoints.
+-   `analysis/diagnostics/archive/v0/PROJECT_DIAGNOSTIC.md`: diagnóstico histórico (v0) de PRJ, checklist y checkpoints.
+-   `analysis/diagnostics/archive/v0/PROMPTING_SYSTEM_DIAGNOSTIC.md`: diagnóstico histórico (v0) de PRM, checklist y checkpoints.
 -   `analysis/technical/ARCHITECTURE.md`: arquitectura técnica vigente (único documento de arquitectura activa).
 -   `.github/RELEASE_PROCESS.md`: proceso oficial de release.
 
 ### Política de Actualización Obligatoria
 
 -   Cada cambio funcional que altere comportamiento real debe actualizar `analysis/technical/ARCHITECTURE.md` en el mismo ciclo de trabajo.
--   Cada decisión que cierre o cambie estado de `PRJ-*` o `PRM-*` debe actualizar su diagnóstico canónico en el mismo ciclo de trabajo.
+-   Cada decisión que cierre o cambie estado de `PRJ-*` o `PRM-*` debe reflejarse en el registro diagnóstico activo (o en una nueva versión si el diagnóstico previo está archivado).
+-   La planificación de implementación se gestiona directamente en `analysis/epics/`; no se mantiene roadmap separado.
 -   Si se modifica el flujo de release, actualizar `.github/RELEASE_PROCESS.md` y reflejarlo en `AGENTS.md` si cambia una regla operativa.
 -   No se considera una tarea "cerrada" si el código cambió pero la documentación canónica relacionada no fue actualizada.
 

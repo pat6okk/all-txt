@@ -83,7 +83,8 @@ Eres un ingeniero de software senior especializado en el ecosistema de extension
 ### Política de Actualización Obligatoria
 
 -   Cada cambio funcional que altere comportamiento real debe actualizar `analysis/technical/ARCHITECTURE.md` en el mismo ciclo de trabajo.
--   Cada decisión que cierre o cambie estado de `PRJ-*` o `PRM-*` debe actualizar su diagnóstico canónico en el mismo ciclo de trabajo.
+-   Cada decisión que cierre o cambie estado de `PRJ-*` o `PRM-*` debe reflejarse en el registro diagnóstico activo (o en una nueva versión si el diagnóstico previo está archivado).
+-   La planificación de implementación se gestiona directamente en `analysis/epics/`; no se mantiene roadmap separado.
 -   Si se modifica el flujo de release, actualizar `.github/RELEASE_PROCESS.md` y reflejarlo en `AGENTS.md` si cambia una regla operativa.
 -   No se considera una tarea "cerrada" si el código cambió pero la documentación canónica relacionada no fue actualizada.
 

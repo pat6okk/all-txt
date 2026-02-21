@@ -153,6 +153,57 @@ Como usuario de Obsidian en móvil, quiero que el plugin funcione con las mismas
 
 ---
 
+## US-9.5: Plantillas de prompts FLOW para agentes IA
+
+**Componentes:** [MULTI] [DOCS]  
+**Estado:** 🟡 Parcial (documentación base creada, falta estandarización completa)
+
+**Historia:**
+Como usuario que trabaja con agentes IA, quiero prompts estandarizados y alineados con la sintaxis vigente de FLOW.txt, para obtener salidas parseables sin retrabajo manual.
+
+**Criterios de Aceptación:**
+- ✅ Existe al menos una plantilla operativa para reuniones alineada a `strict-only`, `PLAN/DUE`, prioridades y labels.
+- ✅ La plantilla define acción explícita de salida (crear `.md` en la misma carpeta de la transcripción).
+- ⚠️ Falta definir set mínimo oficial de plantillas por caso de uso (reuniones, research, soporte, ventas).
+- ❌ Falta guía de versionado de prompts y criterio de deprecación.
+
+**Implementación actual:**
+- ✅ Plantilla base documentada: `analisis_reuniones.prompt.md`.
+- ✅ Reglas alineadas al contrato FLOW vigente.
+- ⚠️ Aún no hay catálogo oficial de prompts ni checklist de calidad unificado.
+
+**Archivos relacionados:**
+- [analysis/prompts/analisis_reuniones.prompt.md](../prompts/analisis_reuniones.prompt.md)
+- [analysis/technical/ARCHITECTURE.md](../technical/ARCHITECTURE.md)
+
+---
+
+## US-9.6: Gobernanza de instrucciones para agentes
+
+**Componentes:** [MULTI] [DOCS] [CONFIG]  
+**Estado:** 🟡 Parcial (modelo base implementado, falta guía operativa para prompts de dominio)
+
+**Historia:**
+Como equipo mantenedor, queremos un sistema canónico de instrucciones para agentes y reglas claras de precedencia/sincronización, para evitar contradicciones entre herramientas de IA.
+
+**Criterios de Aceptación:**
+- ✅ `AGENTS.md` define canonicidad, precedencia y política de idioma.
+- ✅ Derivados sincronizados con comandos oficiales (`sync:agents`, `sync:agents:check`).
+- ⚠️ Falta especificar cómo se conectan formalmente prompts de dominio (`analysis/prompts/`) con este sistema.
+- ❌ Falta checklist de revisión para aprobar cambios de instrucciones/prompting en PR.
+
+**Implementación actual:**
+- ✅ Fuente canónica de instrucciones establecida en `AGENTS.md`.
+- ✅ Sincronización automática de archivos derivados de agente.
+- ⚠️ Gobernanza de prompts de dominio aún sin proceso formal de mantenimiento.
+
+**Archivos relacionados:**
+- [AGENTS.md](../../AGENTS.md)
+- [scripts/sync-agent-instructions.mjs](../../scripts/sync-agent-instructions.mjs)
+- [analysis/prompts/analisis_reuniones.prompt.md](../prompts/analisis_reuniones.prompt.md)
+
+---
+
 ## Resumen de Épica 9
 
 | US | Descripción | Estado | Versión |
@@ -161,12 +212,15 @@ Como usuario de Obsidian en móvil, quiero que el plugin funcione con las mismas
 | US-9.2 | Exportación | 🔵 | v2.0 |
 | US-9.3 | API para IA | 🔵 | v2.0+ |
 | US-9.4 | Sincronización móvil | ⚠️ | v1.x |
+| US-9.5 | Plantillas de prompts FLOW | 🟡 | v1.x |
+| US-9.6 | Gobernanza de instrucciones de agentes | 🟡 | v1.x |
 
 **Cobertura de componentes:**
-- **[ENGINE]** - 2/4 utilizadas
-- **[VIEW]** - 2/4 utilizadas
-- **[CONFIG]** - 1/4 utilizado
-- **[FUTURO]** - 2/4 visión futura
+- **[ENGINE]** - 2/6 utilizadas
+- **[VIEW]** - 2/6 utilizadas
+- **[CONFIG]** - 1/6 utilizado
+- **[DOCS/MULTI]** - 2/6 parcialmente implementadas
+- **[FUTURO]** - 2/6 visión futura
 
 **Acciones requeridas:**
 1. Crear matriz de testing para US-9.1 (plugins populares)
@@ -174,3 +228,5 @@ Como usuario de Obsidian en móvil, quiero que el plugin funcione con las mismas
 3. Planificar roadmap de IA (US-9.3) para v2.0
 4. Testing móvil exhaustivo para US-9.4 (próximo sprint)
 5. Evaluar Exportación (US-9.2) feedback usuario
+6. Definir catálogo oficial de prompts y versionado mínimo (US-9.5)
+7. Definir checklist de revisión de cambios de prompting/instrucciones (US-9.6)

@@ -140,6 +140,25 @@ Como usuario configurando mi sistema, quiero que al añadir un keyword "Start", 
 
 ---
 
+## US-3.6: Presets de flujos por defecto (futuro)
+
+**Componentes:** [CONFIG] [ENGINE]  
+**Estado:** 🔵 Futuro (backlog de producto)
+
+**Historia:**
+Como usuario, quiero elegir presets de workflow listos para usar y combinarlos con mis flujos actuales, para acelerar la adopción sin perder personalización.
+
+**Ejemplos de presets propuestos:**
+- `PROPOSER -> FACT`
+- `PLANNING -> IMPLEMENT -> DONE`
+
+**Criterios de Aceptación (propuestos):**
+- Selector de presets en Settings para añadir nuevos flujos sin borrar los existentes.
+- Los presets se agregan al conjunto actual respetando validaciones y evitando duplicados.
+- El usuario puede activar/desactivar presets sin perder flujos manuales.
+
+---
+
 ## Resumen de Épica 3
 
 | US | Descripción | Estado |
@@ -149,6 +168,7 @@ Como usuario configurando mi sistema, quiero que al añadir un keyword "Start", 
 | US-3.3 | Flujos jerárquicos | 🟢 |
 | US-3.4 | Menú contextual (Panel + Editor) | 🟢 |
 | US-3.5 | Sincronización vocab-flujos | 🟢 |
+| US-3.6 | Presets de flujos por defecto | 🔵 |
 
 **Cobertura de componentes:**
 - **[CONFIG]** - 5/5 completadas ✅
